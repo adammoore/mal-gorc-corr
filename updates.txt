@@ -1,0 +1,168 @@
+===================================
+GORC-MaLDReTH Correlation Table Export Application
+Updates Log
+===================================
+
+Version 1.0.0 - Initial Release
+Date: 2024
+Developer: Research Data Lifecycle Team
+
+CHANGES MADE:
+============
+
+1. Application Structure Setup
+   - Created Flask application with modular architecture
+   - Implemented RESTful API endpoints for data retrieval
+   - Added CORS support for cross-origin requests
+   - Configured logging for debugging and monitoring
+
+2. Data Management
+   - Defined GORC categories and MaLDReTH stages as constants
+   - Created comprehensive correlation data structure
+   - Implemented stage-specific service concentration mappings
+   - Added key findings and analysis summary data
+
+3. Excel Export Functionality
+   - Created ExcelExporter class for workbook generation
+   - Implemented three separate worksheets:
+     * Correlation Matrix with full mapping data
+     * Analysis Summary with service concentrations
+     * Key Findings with important observations
+   - Added cell formatting and styling:
+     * Color coding for correlation strength (X vs XX)
+     * Professional header and border styling
+     * Auto-adjusted column widths for readability
+
+4. CSV Export Capability
+   - Added endpoint for CSV export of individual sheets
+   - Implemented data transformation for CSV format
+   - Simplified multi-line values for CSV compatibility
+
+5. Web Interface
+   - Created responsive Bootstrap-based UI
+   - Implemented interactive correlation matrix display
+   - Added DataTables integration for table functionality
+   - Created export options section with clear instructions
+
+6. API Endpoints
+   - GET /: Main application interface
+   - GET /api/correlation-data: JSON data retrieval
+   - GET /export/excel: Excel file download
+   - GET /export/csv/<sheet_type>: CSV file download
+
+7. Error Handling
+   - Implemented comprehensive error logging
+   - Added user-friendly error messages
+   - Created error handlers for 404 and 500 errors
+
+8. Documentation
+   - Added extensive docstrings to all functions
+   - Included type hints for better code clarity
+   - Created inline comments for complex logic
+   - Followed PEP 8 style guidelines
+
+9. Deployment Preparation
+   - Added environment variable support
+   - Configured for AWS EC2 deployment
+   - Included gunicorn in requirements
+   - Set up proper port configuration
+
+TECHNICAL DETAILS:
+==================
+
+- Used openpyxl for Excel generation to ensure compatibility
+- Implemented BytesIO for in-memory file generation
+- Added proper MIME types for file downloads
+- Used pandas for efficient data manipulation
+- Implemented responsive design for mobile compatibility
+
+NEXT STEPS:
+===========
+
+1. Google Sheets API Integration (Future Enhancement)
+   - Direct upload to Google Sheets
+   - OAuth2 authentication flow
+   - Real-time synchronization
+
+2. Additional Features to Consider
+   - User authentication for private data
+   - Custom correlation mapping upload
+   - Export scheduling and automation
+   - Data visualization charts
+   - Version control for correlation updates
+
+DEPLOYMENT NOTES:
+=================
+
+For AWS EC2 deployment:
+1. Set up Python 3.9+ environment
+2. Install dependencies: pip install -r requirements.txt
+3. Set environment variables:
+   - SECRET_KEY: Generate secure key
+   - FLASK_ENV: Set to 'production'
+   - PORT: Default 5000 or custom
+4. Run with gunicorn: gunicorn -w 4 -b 0.0.0.0:5000 app:app
+5. Configure nginx as reverse proxy
+6. Set up SSL certificate for HTTPS
+
+TESTING CHECKLIST:
+==================
+
+✓ Excel export functionality
+✓ CSV export for both matrix and summary
+✓ Web interface responsiveness
+✓ API endpoint responses
+✓ Error handling mechanisms
+✓ Cross-browser compatibility
+✓ Mobile device testing
+
+===================================
+GORC-MaLDReTH Correlation Table Export Application
+Updates Log
+===================================
+
+Version 1.1.0 - Refactored Correlation Display
+Date: 2024
+Developer: Research Data Lifecycle Team
+
+CHANGES MADE:
+============
+
+1. Data Structure Refactoring
+   - Modified CORRELATION_DATA to separate markers (X/XX) from descriptions
+   - Changed structure to use dictionaries with 'marker' and 'description' keys
+   - Maintained backward compatibility with API responses
+
+2. Excel Export Improvements
+   - Updated ExcelExporter to display only markers in cells
+   - Added cell comments containing descriptions using openpyxl.comments
+   - Improved visual formatting with centered markers
+   - Enhanced color coding: Red for XX (strong), Green for X (standard)
+   - Added font styling to make markers more prominent
+
+3. Web Interface Enhancements
+   - Refactored table display to show only X/XX markers
+   - Implemented custom tooltip system for descriptions
+   - Added hover functionality to display detailed information
+   - Created visual legend explaining correlation strengths
+   - Improved cell styling with centered, bold markers
+
+4. User Experience Improvements
+   - Cleaner, more professional table appearance
+   - Tooltips display category, stage, and description on hover
+   - Added icons to enhance visual hierarchy
+   - Responsive tooltip positioning to prevent off-screen display
+
+5. CSV Export Updates
+   - Modified to export only correlation markers
+   - Removed descriptions from CSV for cleaner data analysis
+   - Maintained compatibility with spreadsheet applications
+
+TECHNICAL CHANGES:
+==================
+
+- Added openpyxl.comments.Comment for Excel cell comments
+- Implemented custom JavaScript tooltip system
+- Enhanced CSS for better visual presentation
+- Improved data attribute usage in HTML for tooltip content
+
