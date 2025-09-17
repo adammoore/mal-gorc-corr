@@ -317,47 +317,38 @@ class MaLDReTHRadialVisualization {
         const categoryGroup = this.g.append('g')
             .attr('class', 'category-arcs');
 
-        // Sort categories by coverage strength and size for optimal ring assignment
-        const sortedCategories = this.data.gorcCategories
-            .map(category => ({
-                ...category,
-                coverage: this.categoryCoverage[category.name]
-            }))
-            .filter(cat => cat.coverage && cat.coverage.stages.length > 0)
-            .sort((a, b) => {
-                // Sort by strength first, then by coverage count
-                const strengthOrder = { 'strong': 3, 'standard': 2, 'weak': 1, 'none': 0 };
-                const strengthDiff = strengthOrder[b.coverage.strength] - strengthOrder[a.coverage.strength];
-                if (strengthDiff !== 0) return strengthDiff;
-                return b.coverage.stages.length - a.coverage.stages.length;
-            });
+        // Create a simple, reliable arc system using equal angular distribution
+        const categoriesWithCoverage = this.data.gorcCategories.filter(category => {
+            const coverage = this.categoryCoverage[category.name];
+            return coverage && coverage.stages.length > 0;
+        });
 
-        // Assign categories to different rings to prevent overlap
-        sortedCategories.forEach((category, index) => {
-            const coverage = category.coverage;
-            const ringIndex = index % this.categoryRings;
-            const baseRadius = this.categoryBaseRadius + (ringIndex * this.categoryRingSpacing);
+        const anglePerCategory = (2 * Math.PI) / categoriesWithCoverage.length;
 
-            // Create arc generator with ring-specific radii
-            const innerRadius = baseRadius - 15;
-            const outerRadius = baseRadius + 15;
+        categoriesWithCoverage.forEach((category, index) => {
+            const coverage = this.categoryCoverage[category.name];
 
-            // Adjust radius based on strength (smaller adjustments now)
-            const radiusAdjustment = coverage.strength === 'strong' ? 5 :
-                                   coverage.strength === 'standard' ? 2 : 0;
+            // Calculate unique position for each category
+            const categoryRadius = this.categoryBaseRadius + (index % 3) * 60; // 3 distinct rings
+            const startAngle = (index * anglePerCategory) - Math.PI / 2;
+            const endAngle = startAngle + (anglePerCategory * 0.8); // Leave small gaps
+
+            // Create arc generator
+            const innerRadius = categoryRadius - 20;
+            const outerRadius = categoryRadius + 20;
 
             const arcGenerator = d3.arc()
-                .innerRadius(innerRadius - radiusAdjustment)
-                .outerRadius(outerRadius + radiusAdjustment)
-                .startAngle(coverage.startAngle)
-                .endAngle(coverage.endAngle)
+                .innerRadius(innerRadius)
+                .outerRadius(outerRadius)
+                .startAngle(startAngle)
+                .endAngle(endAngle)
                 .cornerRadius(3);
-            
+
             // Create arc group
             const arcGroup = categoryGroup.append('g')
                 .attr('class', 'category-arc-group')
                 .attr('data-category', category.name);
-            
+
             // Main arc
             const arc = arcGroup.append('path')
                 .attr('d', arcGenerator())
@@ -368,8 +359,8 @@ class MaLDReTHRadialVisualization {
                 .attr('data-category', category.name)
                 .style('cursor', 'pointer')
                 .style('opacity', 0.7);
-            
-            // Add pattern for visual texture
+
+            // Add pattern for strong correlations
             if (coverage.strength === 'strong') {
                 const patternId = `pattern-${category.name.replace(/\s/g, '-')}`;
                 const pattern = this.defs.append('pattern')
@@ -377,42 +368,43 @@ class MaLDReTHRadialVisualization {
                     .attr('patternUnits', 'userSpaceOnUse')
                     .attr('width', 4)
                     .attr('height', 4);
-                
+
                 pattern.append('rect')
                     .attr('width', 4)
                     .attr('height', 4)
                     .attr('fill', this.colors.categoryStrength(coverage.strength));
-                
+
                 pattern.append('path')
                     .attr('d', 'M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2')
                     .attr('stroke', '#fff')
                     .attr('stroke-width', 0.5)
                     .attr('opacity', 0.5);
-                
+
                 arc.style('fill', `url(#${patternId})`);
             }
-            
-            // Add category label along the arc
-            const labelAngle = (coverage.startAngle + coverage.endAngle) / 2;
-            const labelRadius = outerRadius + radiusAdjustment + 12;
+
+            // Add category label
+            const labelAngle = (startAngle + endAngle) / 2;
+            const labelRadius = outerRadius + 25;
             const labelX = Math.cos(labelAngle) * labelRadius;
             const labelY = Math.sin(labelAngle) * labelRadius;
-            
+
             // Calculate text rotation
             let textRotation = (labelAngle * 180 / Math.PI) + 90;
             if (textRotation > 90 && textRotation < 270) {
                 textRotation += 180;
             }
-            
+
             arcGroup.append('text')
                 .attr('transform', `translate(${labelX}, ${labelY}) rotate(${textRotation})`)
                 .attr('text-anchor', 'middle')
                 .style('font-size', '10px')
                 .style('font-weight', 'bold')
                 .style('fill', '#333')
+                .style('pointer-events', 'none')
                 .text(category.shortName || category.name.substring(0, 12))
                 .attr('class', 'category-label');
-            
+
             // Add coverage indicator
             const coverageText = `${coverage.stages.length}/${this.data.stages.length}`;
             arcGroup.append('text')
@@ -421,6 +413,7 @@ class MaLDReTHRadialVisualization {
                 .attr('dy', '1.1em')
                 .style('font-size', '8px')
                 .style('fill', '#666')
+                .style('pointer-events', 'none')
                 .text(coverageText)
                 .attr('class', 'coverage-indicator');
         });
@@ -539,11 +532,11 @@ class MaLDReTHRadialVisualization {
     createLegend() {
         const legendGroup = this.svg.append('g')
             .attr('class', 'legend')
-            .attr('transform', `translate(-30, ${this.height - 460})`);
+            .attr('transform', `translate(-10, ${this.height - 460})`);
         
         // Background with shadow
         const legendBg = legendGroup.append('rect')
-            .attr('width', 250)
+            .attr('width', 230)
             .attr('height', 270)
             .attr('fill', 'rgba(255, 255, 255, 0.95)')
             .attr('stroke', '#ddd')
@@ -882,37 +875,43 @@ document.addEventListener('DOMContentLoaded', function() {
                     .style('display', 'none');
             });
             
-            // Add category filter buttons (for all categories that have correlations)
+            // Add category filter buttons - simple and reliable approach
             const filterContainer = document.getElementById('category-filters');
             if (filterContainer) {
-                // Filter to only include categories that have correlations in the data
-                const categoriesWithCoverage = data.gorcCategories.filter(category => {
-                    return data.correlations[category.name] &&
-                           Object.values(data.correlations[category.name]).some(corr => corr.marker);
-                });
+                // Clear any existing buttons
+                filterContainer.innerHTML = '';
 
-                categoriesWithCoverage.forEach(category => {
+                // Use all GORC categories that have correlations
+                const validCategories = data.gorcCategories.filter(category =>
+                    data.correlations[category.name]
+                );
+
+                console.log('Creating filter buttons for:', validCategories.map(c => c.shortName));
+
+                validCategories.forEach((category, index) => {
                     const btn = document.createElement('button');
                     btn.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
                     btn.textContent = category.shortName;
                     btn.setAttribute('data-category', category.name);
-                    btn.onclick = () => {
-                        console.log('Filter button clicked:', category.name);
-                        // Remove active class from all buttons
+                    btn.setAttribute('data-index', index);
+
+                    btn.addEventListener('click', function() {
+                        console.log('Button clicked for:', category.name);
+
+                        // Reset all buttons to outline style
                         filterContainer.querySelectorAll('button').forEach(b => {
-                            b.classList.remove('btn-primary');
-                            b.classList.add('btn-outline-primary');
-                            if (b.classList.contains('btn-secondary')) {
-                                b.classList.remove('btn-secondary');
-                                b.classList.add('btn-outline-secondary');
+                            if (!b.classList.contains('btn-outline-secondary')) {
+                                b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
                             }
                         });
-                        // Add active class to clicked button
-                        btn.classList.remove('btn-outline-primary');
-                        btn.classList.add('btn-primary');
-                        console.log('Calling highlightCategory with:', category.name);
-                        window.radialViz.highlightCategory(category.name);
-                    };
+
+                        // Set this button to active
+                        this.className = 'btn btn-sm btn-primary me-1 mb-1';
+
+                        // Simple direct filtering
+                        filterCategoryArcs(category.name);
+                    });
+
                     filterContainer.appendChild(btn);
                 });
 
@@ -920,19 +919,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 const resetBtn = document.createElement('button');
                 resetBtn.className = 'btn btn-sm btn-outline-secondary me-1 mb-1';
                 resetBtn.textContent = 'Show All';
-                resetBtn.onclick = () => {
-                    // Remove active class from all buttons
+                resetBtn.addEventListener('click', function() {
+                    // Reset all buttons
                     filterContainer.querySelectorAll('button').forEach(b => {
-                        if (b !== resetBtn) {
-                            b.classList.remove('btn-primary');
-                            b.classList.add('btn-outline-primary');
+                        if (!b.classList.contains('btn-outline-secondary')) {
+                            b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
                         }
                     });
-                    resetBtn.classList.remove('btn-outline-secondary');
-                    resetBtn.classList.add('btn-secondary');
-                    window.radialViz.resetView();
-                };
+                    this.className = 'btn btn-sm btn-secondary me-1 mb-1';
+                    resetCategoryView();
+                });
                 filterContainer.appendChild(resetBtn);
+            }
+
+            // Simple filter function for categories
+            function filterCategoryArcs(categoryName) {
+                console.log('Filtering for category:', categoryName);
+
+                // Dim all category arcs
+                d3.selectAll('.category-arc').style('opacity', 0.1);
+
+                // Highlight selected category arc
+                d3.selectAll('.category-arc')
+                    .filter(function() {
+                        return d3.select(this).attr('data-category') === categoryName;
+                    })
+                    .style('opacity', 0.9);
+
+                // Hide all connections except for this category
+                d3.selectAll('.connection-path').style('display', 'none');
+                d3.selectAll('.connection-path')
+                    .filter(function() {
+                        return d3.select(this).attr('data-category') === categoryName;
+                    })
+                    .style('display', 'block')
+                    .style('stroke-opacity', 0.6);
+            }
+
+            // Simple reset function
+            function resetCategoryView() {
+                console.log('Resetting category view');
+                d3.selectAll('.category-arc').style('opacity', 0.7);
+                d3.selectAll('.connection-path')
+                    .style('display', 'block')
+                    .style('stroke-opacity', 0.15);
             }
         })
         .catch(error => {
