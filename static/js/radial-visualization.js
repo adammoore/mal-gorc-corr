@@ -332,8 +332,8 @@ class MaLDReTHRadialVisualization {
         categoriesWithCoverage.forEach((category, index) => {
             const coverage = category.coverage;
 
-            // Assign each category to its own unique ring - no overlapping
-            const categoryRadius = this.categoryBaseRadius + (index * 35);
+            // Assign each category to its own unique ring with tighter spacing
+            const categoryRadius = this.categoryBaseRadius + (index * 25);
 
             // Use pre-calculated coverage angles from calculateCategoryCoverage()
             let startAngle = coverage.startAngle;
@@ -347,9 +347,9 @@ class MaLDReTHRadialVisualization {
                 endAngle = center + minArcSize / 2;
             }
 
-            // Create thinner arc generator
-            const innerRadius = categoryRadius - 12; // Reduced thickness
-            const outerRadius = categoryRadius + 12; // Reduced thickness
+            // Create very thin arc generator to avoid overlap with research tools
+            const innerRadius = categoryRadius - 8; // Even thinner
+            const outerRadius = categoryRadius + 8; // Even thinner
 
             const arcGenerator = d3.arc()
                 .innerRadius(innerRadius)
@@ -889,10 +889,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     .style('display', 'none');
             });
             
-            // Add category filter buttons - simple and reliable approach
+            // Add category filter buttons - completely fresh approach with event delegation
             const filterContainer = document.getElementById('category-filters');
             if (filterContainer) {
-                // Clear any existing buttons
+                console.log('Filter container found:', filterContainer);
+
+                // Clear any existing buttons and events
                 filterContainer.innerHTML = '';
 
                 // Use all GORC categories that have correlations
@@ -902,48 +904,60 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 console.log('Creating filter buttons for:', validCategories.map(c => c.shortName));
 
+                // Use event delegation instead of individual event listeners
+                filterContainer.addEventListener('click', function(event) {
+                    if (event.target.tagName === 'BUTTON') {
+                        const categoryName = event.target.getAttribute('data-category');
+                        console.log('Event delegation - Button clicked for:', categoryName);
+
+                        if (categoryName) {
+                            // Reset all buttons
+                            filterContainer.querySelectorAll('button').forEach(b => {
+                                if (b.getAttribute('data-category')) { // Only reset category buttons
+                                    b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
+                                }
+                            });
+
+                            // Set this button to active
+                            event.target.className = 'btn btn-sm btn-primary me-1 mb-1';
+
+                            // Call filter function
+                            filterCategoryArcs(categoryName);
+                        } else if (event.target.textContent === 'Show All') {
+                            // Reset button clicked
+                            filterContainer.querySelectorAll('button').forEach(b => {
+                                if (b.getAttribute('data-category')) {
+                                    b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
+                                }
+                            });
+                            event.target.className = 'btn btn-sm btn-secondary me-1 mb-1';
+                            resetCategoryView();
+                        }
+                    }
+                });
+
+                // Create buttons with simpler approach
                 validCategories.forEach((category, index) => {
                     const btn = document.createElement('button');
+                    btn.type = 'button';
                     btn.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
                     btn.textContent = category.shortName;
                     btn.setAttribute('data-category', category.name);
-                    btn.setAttribute('data-index', index);
-
-                    btn.addEventListener('click', function() {
-                        console.log('Button clicked for:', category.name);
-
-                        // Reset all buttons to outline style
-                        filterContainer.querySelectorAll('button').forEach(b => {
-                            if (!b.classList.contains('btn-outline-secondary')) {
-                                b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
-                            }
-                        });
-
-                        // Set this button to active
-                        this.className = 'btn btn-sm btn-primary me-1 mb-1';
-
-                        // Simple direct filtering
-                        filterCategoryArcs(category.name);
-                    });
-
+                    btn.setAttribute('title', category.name); // Tooltip
                     filterContainer.appendChild(btn);
                 });
 
                 // Add reset button
                 const resetBtn = document.createElement('button');
+                resetBtn.type = 'button';
                 resetBtn.className = 'btn btn-sm btn-outline-secondary me-1 mb-1';
                 resetBtn.textContent = 'Show All';
-                resetBtn.addEventListener('click', function() {
-                    // Reset all buttons
-                    filterContainer.querySelectorAll('button').forEach(b => {
-                        if (!b.classList.contains('btn-outline-secondary')) {
-                            b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
-                        }
-                    });
-                    this.className = 'btn btn-sm btn-secondary me-1 mb-1';
-                    resetCategoryView();
-                });
+                resetBtn.setAttribute('title', 'Reset all filters');
                 filterContainer.appendChild(resetBtn);
+
+                console.log('Buttons created. Total buttons:', filterContainer.children.length);
+            } else {
+                console.error('Filter container not found!');
             }
 
             // Simple filter function for categories
