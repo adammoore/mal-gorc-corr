@@ -14,7 +14,7 @@ class MaLDReTHRadialVisualization {
         this.centerRadius = 80;
         this.stageRadius = 180;
         this.categoryBaseRadius = 280;
-        this.categoryRingSpacing = 40;
+        this.categoryRingSpacing = 50;
         this.toolRadius = 480;
         this.categoryRings = 3; // Number of concentric rings for categories
         this.colors = {
@@ -264,6 +264,7 @@ class MaLDReTHRadialVisualization {
             .style('fill', '#666')
             .style('font-size', '9px')
             .style('font-weight', 'bold')
+            .style('pointer-events', 'none')
             .text((d, i) => i + 1);
         
         // Stage connections
@@ -538,7 +539,7 @@ class MaLDReTHRadialVisualization {
     createLegend() {
         const legendGroup = this.svg.append('g')
             .attr('class', 'legend')
-            .attr('transform', `translate(-50, ${this.height - 460})`);
+            .attr('transform', `translate(-30, ${this.height - 460})`);
         
         // Background with shadow
         const legendBg = legendGroup.append('rect')
@@ -890,14 +891,13 @@ document.addEventListener('DOMContentLoaded', function() {
                            Object.values(data.correlations[category.name]).some(corr => corr.marker);
                 });
 
-                console.log('Categories with coverage:', categoriesWithCoverage.map(c => c.name));
-
                 categoriesWithCoverage.forEach(category => {
                     const btn = document.createElement('button');
                     btn.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
                     btn.textContent = category.shortName;
                     btn.setAttribute('data-category', category.name);
                     btn.onclick = () => {
+                        console.log('Filter button clicked:', category.name);
                         // Remove active class from all buttons
                         filterContainer.querySelectorAll('button').forEach(b => {
                             b.classList.remove('btn-primary');
@@ -910,6 +910,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Add active class to clicked button
                         btn.classList.remove('btn-outline-primary');
                         btn.classList.add('btn-primary');
+                        console.log('Calling highlightCategory with:', category.name);
                         window.radialViz.highlightCategory(category.name);
                     };
                     filterContainer.appendChild(btn);
