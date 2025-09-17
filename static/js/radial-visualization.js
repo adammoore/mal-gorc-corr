@@ -538,7 +538,7 @@ class MaLDReTHRadialVisualization {
     createLegend() {
         const legendGroup = this.svg.append('g')
             .attr('class', 'legend')
-            .attr('transform', `translate(-10, ${this.height - 460})`);
+            .attr('transform', `translate(-50, ${this.height - 460})`);
         
         // Background with shadow
         const legendBg = legendGroup.append('rect')
@@ -596,24 +596,24 @@ class MaLDReTHRadialVisualization {
                 .text(item.label);
         });
         
-        // Add notes about visualization structure
+        // Add notes about visualization structure (with proper spacing)
         legendGroup.append('text')
             .attr('x', 10)
-            .attr('y', 175)
+            .attr('y', 205)
             .style('font-size', '10px')
             .style('font-weight', 'bold')
             .text('Multi-ring structure:');
 
         legendGroup.append('text')
             .attr('x', 10)
-            .attr('y', 188)
+            .attr('y', 218)
             .style('font-size', '9px')
             .style('font-style', 'italic')
             .text('Categories separated by strength');
 
         legendGroup.append('text')
             .attr('x', 10)
-            .attr('y', 200)
+            .attr('y', 230)
             .style('font-size', '9px')
             .style('font-style', 'italic')
             .text('across multiple concentric rings');
@@ -881,14 +881,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     .style('display', 'none');
             });
             
-            // Add category filter buttons (only for categories with coverage)
+            // Add category filter buttons (for all categories that have correlations)
             const filterContainer = document.getElementById('category-filters');
             if (filterContainer) {
-                // Filter to only include categories that have coverage (same as visualization)
+                // Filter to only include categories that have correlations in the data
                 const categoriesWithCoverage = data.gorcCategories.filter(category => {
-                    const coverage = window.radialViz.categoryCoverage[category.name];
-                    return coverage && coverage.stages.length > 0;
+                    return data.correlations[category.name] &&
+                           Object.values(data.correlations[category.name]).some(corr => corr.marker);
                 });
+
+                console.log('Categories with coverage:', categoriesWithCoverage.map(c => c.name));
 
                 categoriesWithCoverage.forEach(category => {
                     const btn = document.createElement('button');
