@@ -538,12 +538,12 @@ class MaLDReTHRadialVisualization {
     createLegend() {
         const legendGroup = this.svg.append('g')
             .attr('class', 'legend')
-            .attr('transform', `translate(50, ${this.height - 400})`);
+            .attr('transform', `translate(-10, ${this.height - 460})`);
         
         // Background with shadow
         const legendBg = legendGroup.append('rect')
             .attr('width', 250)
-            .attr('height', 220)
+            .attr('height', 270)
             .attr('fill', 'rgba(255, 255, 255, 0.95)')
             .attr('stroke', '#ddd')
             .attr('rx', 5)
@@ -637,12 +637,17 @@ class MaLDReTHRadialVisualization {
         
         // Stage interaction
         this.g.selectAll('.stage-circle')
-            .on('mouseover', function(event, d) {
-                d3.select(this)
-                    .transition()
-                    .duration(200)
-                    .attr('r', 40);
-                
+            .on('mouseenter', function(event, d) {
+                const element = d3.select(this);
+
+                // Only animate if not already scaled
+                if (!element.classed('stage-hovered')) {
+                    element.classed('stage-hovered', true)
+                        .transition()
+                        .duration(150)
+                        .attr('r', 40);
+                }
+
                 tooltip.style('visibility', 'visible')
                     .html(`
                         <div style="font-weight: bold; margin-bottom: 5px;">${d}</div>
@@ -651,7 +656,7 @@ class MaLDReTHRadialVisualization {
                             Stage ${d3.select(this.parentNode).datum()} in the lifecycle
                         </div>
                     `);
-                
+
                 // Highlight connections
                 d3.selectAll('.connection-path')
                     .style('stroke-opacity', function(pathData) {
@@ -662,14 +667,15 @@ class MaLDReTHRadialVisualization {
                 tooltip.style('top', (event.pageY - 10) + 'px')
                     .style('left', (event.pageX + 10) + 'px');
             })
-            .on('mouseout', function() {
-                d3.select(this)
+            .on('mouseleave', function() {
+                const element = d3.select(this);
+                element.classed('stage-hovered', false)
                     .transition()
-                    .duration(200)
+                    .duration(150)
                     .attr('r', 35);
-                
+
                 tooltip.style('visibility', 'hidden');
-                
+
                 // Reset connections
                 d3.selectAll('.connection-path')
                     .style('stroke-opacity', 0.2);
@@ -712,7 +718,7 @@ class MaLDReTHRadialVisualization {
         
         // Category arc interaction
         this.g.selectAll('.category-arc')
-            .on('mouseover', function(event, d) {
+            .on('mouseenter', function(event, d) {
                 const categoryName = d3.select(this).attr('data-category');
                 const coverage = this.categoryCoverage[categoryName];
                 
@@ -762,7 +768,7 @@ class MaLDReTHRadialVisualization {
                 tooltip.style('top', (event.pageY - 10) + 'px')
                     .style('left', (event.pageX + 10) + 'px');
             })
-            .on('mouseout', function() {
+            .on('mouseleave', function() {
                 d3.select(this)
                     .transition()
                     .duration(200)
@@ -888,13 +894,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     const btn = document.createElement('button');
                     btn.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
                     btn.textContent = category.shortName;
+                    btn.setAttribute('data-category', category.name);
                     btn.onclick = () => {
                         // Remove active class from all buttons
                         filterContainer.querySelectorAll('button').forEach(b => {
-                            b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
+                            b.classList.remove('btn-primary');
+                            b.classList.add('btn-outline-primary');
+                            if (b.classList.contains('btn-secondary')) {
+                                b.classList.remove('btn-secondary');
+                                b.classList.add('btn-outline-secondary');
+                            }
                         });
                         // Add active class to clicked button
-                        btn.className = 'btn btn-sm btn-primary me-1 mb-1';
+                        btn.classList.remove('btn-outline-primary');
+                        btn.classList.add('btn-primary');
                         window.radialViz.highlightCategory(category.name);
                     };
                     filterContainer.appendChild(btn);
@@ -908,10 +921,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Remove active class from all buttons
                     filterContainer.querySelectorAll('button').forEach(b => {
                         if (b !== resetBtn) {
-                            b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
+                            b.classList.remove('btn-primary');
+                            b.classList.add('btn-outline-primary');
                         }
                     });
-                    resetBtn.className = 'btn btn-sm btn-secondary me-1 mb-1';
+                    resetBtn.classList.remove('btn-outline-secondary');
+                    resetBtn.classList.add('btn-secondary');
                     window.radialViz.resetView();
                 };
                 filterContainer.appendChild(resetBtn);
