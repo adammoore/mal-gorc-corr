@@ -11,10 +11,12 @@ An interactive web application for visualizing and analyzing correlations betwee
 - **Export Options**: Excel (.xlsx) and CSV formats with cell comments
 
 ### 🎯 Radial Visualization
-- **Multi-Ring Design**: MaLDReTH stages (center) → GORC categories (middle rings) → Tools (outer ring)
+- **Multi-Layer Design**: MaLDReTH stages (center) → GORC categories (middle rings) → Tools (outer ring)
 - **Dynamic Arc Coverage**: Category arcs span across all correlated lifecycle stages
-- **Interactive Filtering**: Click stages or use category filter buttons
-- **Multi-Ring Architecture**: GORC categories distributed across 3 concentric rings to prevent overlap
+- **Interactive Filtering**: Click stages or use category filter buttons - all 9 GORC filters fully functional
+- **Optimized Spacing**: GORC categories with unique positioning to prevent visual overlap
+- **Color-Coded Categories**: 9 distinct green variations for clear visual distinction
+- **Enhanced Controls**: Reset View, Show All, and Hide Lines buttons with full functionality
 - **Export Support**: SVG and PNG export options
 
 ### 📈 Key Insights
@@ -124,21 +126,24 @@ mal-gorc-corr/
 - **Export Ready**: Excel with cell comments, CSV compatibility
 
 ### Radial View
-- **Multi-Ring Architecture**:
+- **Multi-Layer Architecture**:
   - Center: MaLDReTH hub
   - Inner ring: 11 lifecycle stages
-  - Middle rings: GORC categories (3 concentric rings)
+  - Middle rings: GORC categories (optimally spaced unique positions)
   - Outer ring: Research tools
-- **Smart Layout**: Categories distributed by correlation strength
-- **Interactive Controls**:
+- **Enhanced Visual Design**:
+  - 9 distinct green color variations for GORC categories
+  - Optimized spacing prevents visual overlap
+  - Thinner arcs (±6px) for cleaner appearance
+- **Fully Interactive Controls**:
   - Stage filtering (click stages)
-  - Category filtering (filter buttons)
-  - View controls (Reset, Show All, Hide Lines)
-- **Visual Encoding**:
-  - Position: Hierarchical importance
-  - Color: Correlation strength
-  - Arc width: Stage coverage
-  - Connections: Relationship strength
+  - Category filtering (all 9 GORC filter buttons functional)
+  - View controls (Reset View, Show All, Hide Lines) with complete functionality
+- **Advanced Visual Encoding**:
+  - Position: Hierarchical importance with optimized spacing
+  - Color: Distinct variations for clear category identification
+  - Arc coverage: Spans actual correlated lifecycle stages
+  - Connections: Relationship strength with proper visual feedback
 
 ## 📊 Key Findings
 
@@ -186,7 +191,8 @@ export PORT="5000"
 
 ## 🔄 Version History
 
-- **v1.4.0** (Current) - Enhanced radial visualization with multi-ring architecture
+- **v1.5.0** (Current) - Comprehensive radial visualization improvements with full interactivity
+- **v1.4.0** - Enhanced radial visualization with multi-ring architecture
 - **v1.3.0** - Dynamic arc coverage implementation
 - **v1.2.0** - Added D3.js radial visualization
 - **v1.1.0** - Refactored correlation display with tooltips
