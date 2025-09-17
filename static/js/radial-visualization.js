@@ -10,11 +10,13 @@ class MaLDReTHRadialVisualization {
         this.containerId = containerId;
         this.data = data;
         this.width = 1200;
-        this.height = 1200;
+        this.height = 1400;
         this.centerRadius = 80;
         this.stageRadius = 180;
-        this.categoryRadius = 350;
-        this.toolRadius = 500;
+        this.categoryBaseRadius = 280;
+        this.categoryRingSpacing = 30;
+        this.toolRadius = 550;
+        this.categoryRings = 3; // Number of concentric rings for categories
         this.colors = {
             stages: d3.scaleOrdinal()
                 .domain(data.stages)
@@ -41,6 +43,9 @@ class MaLDReTHRadialVisualization {
             .attr('viewBox', `0 0 ${this.width} ${this.height}`)
             .attr('preserveAspectRatio', 'xMidYMid meet');
         
+        // Create defs element for patterns and gradients
+        this.defs = this.svg.append('defs');
+
         // Create main group centered
         this.g = this.svg.append('g')
             .attr('transform', `translate(${this.width/2}, ${this.height/2})`);
@@ -150,8 +155,7 @@ class MaLDReTHRadialVisualization {
             .attr('class', 'center-hub');
         
         // Gradient definition
-        const gradient = this.svg.append('defs')
-            .append('radialGradient')
+        const gradient = this.defs.append('radialGradient')
             .attr('id', 'center-gradient')
             .attr('cx', '50%')
             .attr('cy', '50%')
@@ -311,27 +315,42 @@ class MaLDReTHRadialVisualization {
     createDynamicCategoryArcs() {
         const categoryGroup = this.g.append('g')
             .attr('class', 'category-arcs');
-        
-        // Create variable-width arcs based on coverage
-        this.data.gorcCategories.forEach(category => {
-            const coverage = this.categoryCoverage[category.name];
-            
-            if (!coverage || coverage.stages.length === 0) return;
-            
-            // Create arc generator with variable radii for visual interest
-            const innerRadius = this.categoryRadius - 50;
-            const outerRadius = this.categoryRadius;
-            
-            // Adjust radius based on strength
-            const radiusAdjustment = coverage.strength === 'strong' ? 10 : 
-                                   coverage.strength === 'standard' ? 5 : 0;
-            
+
+        // Sort categories by coverage strength and size for optimal ring assignment
+        const sortedCategories = this.data.gorcCategories
+            .map(category => ({
+                ...category,
+                coverage: this.categoryCoverage[category.name]
+            }))
+            .filter(cat => cat.coverage && cat.coverage.stages.length > 0)
+            .sort((a, b) => {
+                // Sort by strength first, then by coverage count
+                const strengthOrder = { 'strong': 3, 'standard': 2, 'weak': 1, 'none': 0 };
+                const strengthDiff = strengthOrder[b.coverage.strength] - strengthOrder[a.coverage.strength];
+                if (strengthDiff !== 0) return strengthDiff;
+                return b.coverage.stages.length - a.coverage.stages.length;
+            });
+
+        // Assign categories to different rings to prevent overlap
+        sortedCategories.forEach((category, index) => {
+            const coverage = category.coverage;
+            const ringIndex = index % this.categoryRings;
+            const baseRadius = this.categoryBaseRadius + (ringIndex * this.categoryRingSpacing);
+
+            // Create arc generator with ring-specific radii
+            const innerRadius = baseRadius - 20;
+            const outerRadius = baseRadius + 15;
+
+            // Adjust radius based on strength (smaller adjustments now)
+            const radiusAdjustment = coverage.strength === 'strong' ? 5 :
+                                   coverage.strength === 'standard' ? 2 : 0;
+
             const arcGenerator = d3.arc()
                 .innerRadius(innerRadius - radiusAdjustment)
                 .outerRadius(outerRadius + radiusAdjustment)
                 .startAngle(coverage.startAngle)
                 .endAngle(coverage.endAngle)
-                .cornerRadius(5);
+                .cornerRadius(3);
             
             // Create arc group
             const arcGroup = categoryGroup.append('g')
@@ -352,8 +371,7 @@ class MaLDReTHRadialVisualization {
             // Add pattern for visual texture
             if (coverage.strength === 'strong') {
                 const patternId = `pattern-${category.name.replace(/\s/g, '-')}`;
-                const pattern = this.svg.select('defs')
-                    .append('pattern')
+                const pattern = this.defs.append('pattern')
                     .attr('id', patternId)
                     .attr('patternUnits', 'userSpaceOnUse')
                     .attr('width', 4)
@@ -375,7 +393,7 @@ class MaLDReTHRadialVisualization {
             
             // Add category label along the arc
             const labelAngle = (coverage.startAngle + coverage.endAngle) / 2;
-            const labelRadius = outerRadius + radiusAdjustment + 15;
+            const labelRadius = outerRadius + radiusAdjustment + 12;
             const labelX = Math.cos(labelAngle) * labelRadius;
             const labelY = Math.sin(labelAngle) * labelRadius;
             
@@ -388,10 +406,10 @@ class MaLDReTHRadialVisualization {
             arcGroup.append('text')
                 .attr('transform', `translate(${labelX}, ${labelY}) rotate(${textRotation})`)
                 .attr('text-anchor', 'middle')
-                .style('font-size', '11px')
+                .style('font-size', '10px')
                 .style('font-weight', 'bold')
                 .style('fill', '#333')
-                .text(category.shortName || category.name.substring(0, 15))
+                .text(category.shortName || category.name.substring(0, 12))
                 .attr('class', 'category-label');
             
             // Add coverage indicator
@@ -399,8 +417,8 @@ class MaLDReTHRadialVisualization {
             arcGroup.append('text')
                 .attr('transform', `translate(${labelX}, ${labelY}) rotate(${textRotation})`)
                 .attr('text-anchor', 'middle')
-                .attr('dy', '1.2em')
-                .style('font-size', '9px')
+                .attr('dy', '1.1em')
+                .style('font-size', '8px')
                 .style('fill', '#666')
                 .text(coverageText)
                 .attr('class', 'coverage-indicator');
@@ -454,19 +472,33 @@ class MaLDReTHRadialVisualization {
         const connectionGroup = this.g.append('g')
             .attr('class', 'connections')
             .style('pointer-events', 'none');
-        
+
+        // Sort categories the same way as in createDynamicCategoryArcs for ring assignment
+        const sortedCategories = this.data.gorcCategories
+            .map(category => ({
+                ...category,
+                coverage: this.categoryCoverage[category.name]
+            }))
+            .filter(cat => cat.coverage && cat.coverage.stages.length > 0)
+            .sort((a, b) => {
+                const strengthOrder = { 'strong': 3, 'standard': 2, 'weak': 1, 'none': 0 };
+                const strengthDiff = strengthOrder[b.coverage.strength] - strengthOrder[a.coverage.strength];
+                if (strengthDiff !== 0) return strengthDiff;
+                return b.coverage.stages.length - a.coverage.stages.length;
+            });
+
         // Create connections from stages to their correlated GORC categories
-        this.data.gorcCategories.forEach(category => {
-            const coverage = this.categoryCoverage[category.name];
-            if (!coverage || coverage.stages.length === 0) return;
-            
+        sortedCategories.forEach((category, index) => {
+            const coverage = category.coverage;
+            const ringIndex = index % this.categoryRings;
+            const categoryRadius = this.categoryBaseRadius + (ringIndex * this.categoryRingSpacing);
+
             coverage.stages.forEach(stageInfo => {
                 const stagePos = this.stagePositions[stageInfo.stage];
                 if (!stagePos) return;
-                
-                // Calculate arc midpoint for this category
+
+                // Calculate arc midpoint for this category at its specific ring
                 const categoryMidAngle = (coverage.startAngle + coverage.endAngle) / 2;
-                const categoryRadius = this.categoryRadius - 25;
                 const categoryX = Math.cos(categoryMidAngle) * categoryRadius;
                 const categoryY = Math.sin(categoryMidAngle) * categoryRadius;
                 
@@ -483,18 +515,18 @@ class MaLDReTHRadialVisualization {
                         radius: categoryRadius
                     }));
                 
-                // Create curved path instead of ribbon for cleaner look
+                // Create curved path with better control point based on ring position
                 const controlRadius = (this.stageRadius + categoryRadius) / 2;
                 const controlAngle = (stagePos.angle + categoryMidAngle) / 2;
                 const controlX = Math.cos(controlAngle) * controlRadius;
                 const controlY = Math.sin(controlAngle) * controlRadius;
-                
+
                 const path = connectionGroup.append('path')
                     .attr('d', `M ${stagePos.x},${stagePos.y} Q ${controlX},${controlY} ${categoryX},${categoryY}`)
                     .attr('fill', 'none')
                     .attr('stroke', stageInfo.marker === 'XX' ? '#ff4444' : '#44ff44')
                     .attr('stroke-width', stageInfo.marker === 'XX' ? 2 : 1)
-                    .attr('stroke-opacity', 0.2)
+                    .attr('stroke-opacity', 0.15)
                     .attr('class', 'connection-path')
                     .attr('data-stage', stageInfo.stage)
                     .attr('data-category', category.name)
@@ -506,13 +538,13 @@ class MaLDReTHRadialVisualization {
     createLegend() {
         const legendGroup = this.svg.append('g')
             .attr('class', 'legend')
-            .attr('transform', 'translate(50, 50)');
+            .attr('transform', `translate(50, ${this.height - 250})`);
         
         // Background with shadow
         const legendBg = legendGroup.append('rect')
             .attr('width', 250)
-            .attr('height', 200)
-            .attr('fill', 'white')
+            .attr('height', 220)
+            .attr('fill', 'rgba(255, 255, 255, 0.95)')
             .attr('stroke', '#ddd')
             .attr('rx', 5)
             .style('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))');
@@ -532,7 +564,7 @@ class MaLDReTHRadialVisualization {
             { color: '#ff4444', label: 'Strong Correlation (3+ XX)', type: 'arc' },
             { color: '#44ff44', label: 'Standard (5+ X)', type: 'arc' },
             { color: '#ffff44', label: 'Weak (2-4 X)', type: 'arc' },
-            { color: '#f0f0f0', label: 'No Correlation', type: 'arc' }
+            { color: '#ddd', label: 'Research Tools', type: 'arc' }
         ];
         
         items.forEach((item, i) => {
@@ -564,13 +596,27 @@ class MaLDReTHRadialVisualization {
                 .text(item.label);
         });
         
-        // Add note about arc width
+        // Add notes about visualization structure
         legendGroup.append('text')
             .attr('x', 10)
-            .attr('y', 185)
+            .attr('y', 175)
             .style('font-size', '10px')
+            .style('font-weight', 'bold')
+            .text('Multi-ring structure:');
+
+        legendGroup.append('text')
+            .attr('x', 10)
+            .attr('y', 188)
+            .style('font-size', '9px')
             .style('font-style', 'italic')
-            .text('Arc width = coverage across stages');
+            .text('Categories separated by strength');
+
+        legendGroup.append('text')
+            .attr('x', 10)
+            .attr('y', 200)
+            .style('font-size', '9px')
+            .style('font-style', 'italic')
+            .text('across multiple concentric rings');
     }
     
     addInteractivity() {
@@ -824,16 +870,46 @@ document.addEventListener('DOMContentLoaded', function() {
                     .style('display', 'none');
             });
             
-            // Add category filter buttons
+            // Add category filter buttons (only for categories with coverage)
             const filterContainer = document.getElementById('category-filters');
             if (filterContainer) {
-                data.gorcCategories.forEach(category => {
+                // Filter to only include categories that have coverage (same as visualization)
+                const categoriesWithCoverage = data.gorcCategories.filter(category => {
+                    const coverage = window.radialViz.categoryCoverage[category.name];
+                    return coverage && coverage.stages.length > 0;
+                });
+
+                categoriesWithCoverage.forEach(category => {
                     const btn = document.createElement('button');
                     btn.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
                     btn.textContent = category.shortName;
-                    btn.onclick = () => window.radialViz.highlightCategory(category.name);
+                    btn.onclick = () => {
+                        // Remove active class from all buttons
+                        filterContainer.querySelectorAll('button').forEach(b => {
+                            b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
+                        });
+                        // Add active class to clicked button
+                        btn.className = 'btn btn-sm btn-primary me-1 mb-1';
+                        window.radialViz.highlightCategory(category.name);
+                    };
                     filterContainer.appendChild(btn);
                 });
+
+                // Add reset button
+                const resetBtn = document.createElement('button');
+                resetBtn.className = 'btn btn-sm btn-outline-secondary me-1 mb-1';
+                resetBtn.textContent = 'Show All';
+                resetBtn.onclick = () => {
+                    // Remove active class from all buttons
+                    filterContainer.querySelectorAll('button').forEach(b => {
+                        if (b !== resetBtn) {
+                            b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
+                        }
+                    });
+                    resetBtn.className = 'btn btn-sm btn-secondary me-1 mb-1';
+                    window.radialViz.resetView();
+                };
+                filterContainer.appendChild(resetBtn);
             }
         })
         .catch(error => {
