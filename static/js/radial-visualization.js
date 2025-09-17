@@ -317,32 +317,57 @@ class MaLDReTHRadialVisualization {
         const categoryGroup = this.g.append('g')
             .attr('class', 'category-arcs');
 
-        // Create a simple, reliable arc system using equal angular distribution
-        const categoriesWithCoverage = this.data.gorcCategories.filter(category => {
-            const coverage = this.categoryCoverage[category.name];
-            return coverage && coverage.stages.length > 0;
-        });
-
-        const anglePerCategory = (2 * Math.PI) / categoriesWithCoverage.length;
+        // Sort categories by strength for ring assignment
+        const categoriesWithCoverage = this.data.gorcCategories
+            .map(category => ({
+                ...category,
+                coverage: this.categoryCoverage[category.name]
+            }))
+            .filter(cat => cat.coverage && cat.coverage.stages.length > 0)
+            .sort((a, b) => {
+                const strengthOrder = { 'strong': 3, 'standard': 2, 'weak': 1, 'none': 0 };
+                return strengthOrder[b.coverage.strength] - strengthOrder[a.coverage.strength];
+            });
 
         categoriesWithCoverage.forEach((category, index) => {
-            const coverage = this.categoryCoverage[category.name];
+            const coverage = category.coverage;
 
-            // Calculate unique position for each category
-            const categoryRadius = this.categoryBaseRadius + (index % 3) * 60; // 3 distinct rings
-            const startAngle = (index * anglePerCategory) - Math.PI / 2;
-            const endAngle = startAngle + (anglePerCategory * 0.8); // Leave small gaps
+            // Assign to rings - stronger correlations get inner rings
+            const ringIndex = index % 3;
+            const categoryRadius = this.categoryBaseRadius + (ringIndex * 60);
 
-            // Create arc generator
-            const innerRadius = categoryRadius - 20;
-            const outerRadius = categoryRadius + 20;
+            // Calculate arc span based on actual stage coverage
+            const stageAngles = coverage.stages.map(stageName => {
+                const stageIndex = this.data.stages.indexOf(stageName);
+                return (stageIndex * 2 * Math.PI / this.data.stages.length) - Math.PI / 2;
+            }).sort((a, b) => a - b);
+
+            let startAngle = stageAngles[0];
+            let endAngle = stageAngles[stageAngles.length - 1];
+
+            // Handle wrap-around (e.g., if stages go from 11 to 1)
+            if (endAngle - startAngle > Math.PI) {
+                [startAngle, endAngle] = [endAngle, startAngle + 2 * Math.PI];
+            }
+
+            // Ensure minimum arc size for visibility
+            const minArcSize = 0.3;
+            if (endAngle - startAngle < minArcSize) {
+                const center = (startAngle + endAngle) / 2;
+                startAngle = center - minArcSize / 2;
+                endAngle = center + minArcSize / 2;
+            }
+
+            // Create thinner arc generator
+            const innerRadius = categoryRadius - 12; // Reduced thickness
+            const outerRadius = categoryRadius + 12; // Reduced thickness
 
             const arcGenerator = d3.arc()
                 .innerRadius(innerRadius)
                 .outerRadius(outerRadius)
                 .startAngle(startAngle)
                 .endAngle(endAngle)
-                .cornerRadius(3);
+                .cornerRadius(2);
 
             // Create arc group
             const arcGroup = categoryGroup.append('g')
@@ -354,7 +379,7 @@ class MaLDReTHRadialVisualization {
                 .attr('d', arcGenerator())
                 .attr('fill', this.colors.categoryStrength(coverage.strength))
                 .attr('stroke', '#fff')
-                .attr('stroke-width', 2)
+                .attr('stroke-width', 1)
                 .attr('class', 'category-arc')
                 .attr('data-category', category.name)
                 .style('cursor', 'pointer')
@@ -383,9 +408,9 @@ class MaLDReTHRadialVisualization {
                 arc.style('fill', `url(#${patternId})`);
             }
 
-            // Add category label
+            // Position label at the center of the arc span (closer to arc)
             const labelAngle = (startAngle + endAngle) / 2;
-            const labelRadius = outerRadius + 25;
+            const labelRadius = outerRadius + 18; // Closer to arc
             const labelX = Math.cos(labelAngle) * labelRadius;
             const labelY = Math.sin(labelAngle) * labelRadius;
 
@@ -398,11 +423,11 @@ class MaLDReTHRadialVisualization {
             arcGroup.append('text')
                 .attr('transform', `translate(${labelX}, ${labelY}) rotate(${textRotation})`)
                 .attr('text-anchor', 'middle')
-                .style('font-size', '10px')
+                .style('font-size', '9px')
                 .style('font-weight', 'bold')
                 .style('fill', '#333')
                 .style('pointer-events', 'none')
-                .text(category.shortName || category.name.substring(0, 12))
+                .text(category.shortName || category.name.substring(0, 10))
                 .attr('class', 'category-label');
 
             // Add coverage indicator
@@ -411,7 +436,7 @@ class MaLDReTHRadialVisualization {
                 .attr('transform', `translate(${labelX}, ${labelY}) rotate(${textRotation})`)
                 .attr('text-anchor', 'middle')
                 .attr('dy', '1.1em')
-                .style('font-size', '8px')
+                .style('font-size', '7px')
                 .style('fill', '#666')
                 .style('pointer-events', 'none')
                 .text(coverageText)
