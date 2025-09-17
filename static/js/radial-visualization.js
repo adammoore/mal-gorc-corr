@@ -2,6 +2,7 @@
  * MaLDReTH Radial Visualization
  * Interactive circular visualization showing relationships between
  * lifecycle stages (center) and tools/services (outer arcs)
+ * Version 2.0 - With dynamic arc coverage based on correlations
  */
 
 class MaLDReTHRadialVisualization {
@@ -12,15 +13,15 @@ class MaLDReTHRadialVisualization {
         this.height = 1200;
         this.centerRadius = 80;
         this.stageRadius = 180;
-        this.categoryRadius = 320;
-        this.toolRadius = 480;
+        this.categoryRadius = 350;
+        this.toolRadius = 500;
         this.colors = {
             stages: d3.scaleOrdinal()
                 .domain(data.stages)
                 .range(d3.schemeCategory10),
-            categories: d3.scaleOrdinal()
-                .domain(['strong', 'standard', 'none'])
-                .range(['#ff6b6b', '#51cf66', '#f8f9fa']),
+            categoryStrength: d3.scaleOrdinal()
+                .domain(['strong', 'standard', 'weak', 'none'])
+                .range(['#ff4444', '#44ff44', '#ffff44', '#f0f0f0']),
             tools: d3.scaleOrdinal()
                 .range(d3.schemeSet3)
         };
@@ -55,14 +56,92 @@ class MaLDReTHRadialVisualization {
         
         this.svg.call(zoom);
         
+        // Calculate GORC category coverage
+        this.calculateCategoryCoverage();
+        
         // Create layers
         this.createCenterHub();
         this.createStageRing();
-        this.createCategoryArcs();
+        this.createDynamicCategoryArcs();
         this.createToolArcs();
         this.createConnections();
         this.createLegend();
         this.addInteractivity();
+    }
+    
+    calculateCategoryCoverage() {
+        /**
+         * Calculate which stages each GORC category covers
+         * This determines the arc span for each category
+         */
+        this.categoryCoverage = {};
+        
+        this.data.gorcCategories.forEach(category => {
+            const coverage = {
+                stages: [],
+                startAngle: null,
+                endAngle: null,
+                strength: 'none',
+                correlationCount: 0,
+                strongCount: 0
+            };
+            
+            // Find all stages this category correlates with
+            this.data.stages.forEach((stage, index) => {
+                const correlation = this.data.correlations[category.name]?.[stage];
+                if (correlation && correlation.marker) {
+                    coverage.stages.push({
+                        stage: stage,
+                        index: index,
+                        marker: correlation.marker,
+                        description: correlation.description
+                    });
+                    
+                    if (correlation.marker === 'XX') {
+                        coverage.strongCount++;
+                    }
+                    coverage.correlationCount++;
+                }
+            });
+            
+            // Calculate angular coverage
+            if (coverage.stages.length > 0) {
+                const angleStep = (2 * Math.PI) / this.data.stages.length;
+                const firstIndex = coverage.stages[0].index;
+                const lastIndex = coverage.stages[coverage.stages.length - 1].index;
+                
+                // Check if the arc should wrap around (e.g., from stage 11 to stage 1)
+                let spanIndices = [];
+                let currentRun = [coverage.stages[0].index];
+                
+                for (let i = 1; i < coverage.stages.length; i++) {
+                    if (coverage.stages[i].index - coverage.stages[i-1].index <= 2) {
+                        currentRun.push(coverage.stages[i].index);
+                    } else {
+                        spanIndices.push(currentRun);
+                        currentRun = [coverage.stages[i].index];
+                    }
+                }
+                spanIndices.push(currentRun);
+                
+                // Use the longest continuous run
+                const longestRun = spanIndices.reduce((a, b) => a.length > b.length ? a : b);
+                
+                coverage.startAngle = (Math.min(...longestRun) * angleStep) - Math.PI / 2 - angleStep / 4;
+                coverage.endAngle = (Math.max(...longestRun) * angleStep) - Math.PI / 2 + angleStep / 4;
+                
+                // Determine overall strength
+                if (coverage.strongCount >= 3) {
+                    coverage.strength = 'strong';
+                } else if (coverage.correlationCount >= 5) {
+                    coverage.strength = 'standard';
+                } else if (coverage.correlationCount >= 2) {
+                    coverage.strength = 'weak';
+                }
+            }
+            
+            this.categoryCoverage[category.name] = coverage;
+        });
     }
     
     createCenterHub() {
@@ -70,9 +149,27 @@ class MaLDReTHRadialVisualization {
         const center = this.g.append('g')
             .attr('class', 'center-hub');
         
+        // Gradient definition
+        const gradient = this.svg.append('defs')
+            .append('radialGradient')
+            .attr('id', 'center-gradient')
+            .attr('cx', '50%')
+            .attr('cy', '50%')
+            .attr('r', '50%');
+        
+        gradient.append('stop')
+            .attr('offset', '0%')
+            .style('stop-color', '#4a90e2')
+            .style('stop-opacity', 1);
+        
+        gradient.append('stop')
+            .attr('offset', '100%')
+            .style('stop-color', '#366092')
+            .style('stop-opacity', 1);
+        
         center.append('circle')
             .attr('r', this.centerRadius)
-            .attr('fill', '#366092')
+            .attr('fill', 'url(#center-gradient)')
             .attr('stroke', '#fff')
             .attr('stroke-width', 3);
         
@@ -97,6 +194,9 @@ class MaLDReTHRadialVisualization {
         const stageGroup = this.g.append('g')
             .attr('class', 'stage-ring');
         
+        // Store stage positions for later use
+        this.stagePositions = {};
+        
         // Create stage nodes
         const stages = stageGroup.selectAll('.stage-node')
             .data(this.data.stages)
@@ -107,17 +207,41 @@ class MaLDReTHRadialVisualization {
                 const angle = i * angleStep - Math.PI / 2;
                 const x = Math.cos(angle) * this.stageRadius;
                 const y = Math.sin(angle) * this.stageRadius;
+                
+                // Store position
+                this.stagePositions[d] = { x, y, angle, index: i };
+                
                 return `translate(${x}, ${y})`;
             });
         
-        // Stage circles
-        stages.append('circle')
-            .attr('r', 35)
-            .attr('fill', (d) => this.colors.stages(d))
-            .attr('stroke', '#fff')
-            .attr('stroke-width', 2)
-            .attr('class', 'stage-circle')
-            .style('cursor', 'pointer');
+        // Stage circles with gradient
+        stages.each(function(d, i) {
+            const group = d3.select(this);
+            
+            // Create radial gradient for each stage
+            const gradientId = `stage-gradient-${i}`;
+            const gradient = group.append('defs')
+                .append('radialGradient')
+                .attr('id', gradientId);
+            
+            gradient.append('stop')
+                .attr('offset', '0%')
+                .style('stop-color', d3.schemeCategory10[i % 10])
+                .style('stop-opacity', 0.8);
+            
+            gradient.append('stop')
+                .attr('offset', '100%')
+                .style('stop-color', d3.schemeCategory10[i % 10])
+                .style('stop-opacity', 1);
+            
+            group.append('circle')
+                .attr('r', 35)
+                .attr('fill', `url(#${gradientId})`)
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2)
+                .attr('class', 'stage-circle')
+                .style('cursor', 'pointer');
+        });
         
         // Stage labels
         stages.append('text')
@@ -129,93 +253,157 @@ class MaLDReTHRadialVisualization {
             .style('pointer-events', 'none')
             .text(d => d.substring(0, 4).toUpperCase());
         
-        // Add stage connections (circular path)
-        const stageConnections = this.data.stages.map((stage, i) => {
+        // Add stage number
+        stages.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '-1.5em')
+            .style('fill', '#666')
+            .style('font-size', '9px')
+            .style('font-weight', 'bold')
+            .text((d, i) => i + 1);
+        
+        // Stage connections
+        this.createStageConnections(stageGroup);
+    }
+    
+    createStageConnections(stageGroup) {
+        const angleStep = (2 * Math.PI) / this.data.stages.length;
+        
+        // Create curved connections between stages
+        const connectionData = [];
+        for (let i = 0; i < this.data.stages.length; i++) {
             const nextIndex = (i + 1) % this.data.stages.length;
             const angle1 = i * angleStep - Math.PI / 2;
             const angle2 = nextIndex * angleStep - Math.PI / 2;
-            return {
+            
+            connectionData.push({
                 source: {
                     x: Math.cos(angle1) * this.stageRadius,
-                    y: Math.sin(angle1) * this.stageRadius
+                    y: Math.sin(angle1) * this.stageRadius,
+                    angle: angle1
                 },
                 target: {
                     x: Math.cos(angle2) * this.stageRadius,
-                    y: Math.sin(angle2) * this.stageRadius
+                    y: Math.sin(angle2) * this.stageRadius,
+                    angle: angle2
                 }
-            };
-        });
+            });
+        }
         
         stageGroup.selectAll('.stage-connection')
-            .data(stageConnections)
+            .data(connectionData)
             .enter()
-            .append('line')
+            .append('path')
             .attr('class', 'stage-connection')
-            .attr('x1', d => d.source.x)
-            .attr('y1', d => d.source.y)
-            .attr('x2', d => d.target.x)
-            .attr('y2', d => d.target.y)
+            .attr('d', d => {
+                const midAngle = (d.source.angle + d.target.angle) / 2;
+                const midRadius = this.stageRadius * 0.85;
+                const midX = Math.cos(midAngle) * midRadius;
+                const midY = Math.sin(midAngle) * midRadius;
+                return `M ${d.source.x},${d.source.y} Q ${midX},${midY} ${d.target.x},${d.target.y}`;
+            })
+            .attr('fill', 'none')
             .attr('stroke', '#ddd')
             .attr('stroke-width', 1)
             .attr('stroke-dasharray', '3,3');
     }
     
-    createCategoryArcs() {
+    createDynamicCategoryArcs() {
         const categoryGroup = this.g.append('g')
             .attr('class', 'category-arcs');
         
-        // Calculate arc segments for each GORC category
-        const arcGenerator = d3.arc()
-            .innerRadius(this.categoryRadius - 30)
-            .outerRadius(this.categoryRadius);
-        
-        const anglePerCategory = (2 * Math.PI) / this.data.gorcCategories.length;
-        
-        this.data.gorcCategories.forEach((category, i) => {
-            const startAngle = i * anglePerCategory - Math.PI / 2;
-            const endAngle = (i + 1) * anglePerCategory - Math.PI / 2;
+        // Create variable-width arcs based on coverage
+        this.data.gorcCategories.forEach(category => {
+            const coverage = this.categoryCoverage[category.name];
             
-            // Determine correlation strength for coloring
-            let correlationCount = 0;
-            let strongCount = 0;
+            if (!coverage || coverage.stages.length === 0) return;
             
-            this.data.stages.forEach(stage => {
-                const correlation = this.data.correlations[category.name]?.[stage];
-                if (correlation) {
-                    if (correlation.marker === 'XX') strongCount++;
-                    else if (correlation.marker === 'X') correlationCount++;
-                }
-            });
+            // Create arc generator with variable radii for visual interest
+            const innerRadius = this.categoryRadius - 50;
+            const outerRadius = this.categoryRadius;
             
-            const fillColor = strongCount > 3 ? '#ffcccb' : 
-                            correlationCount > 5 ? '#90ee90' : 
-                            '#e6e6e6';
+            // Adjust radius based on strength
+            const radiusAdjustment = coverage.strength === 'strong' ? 10 : 
+                                   coverage.strength === 'standard' ? 5 : 0;
             
-            const arc = categoryGroup.append('path')
-                .attr('d', arcGenerator({
-                    startAngle: startAngle,
-                    endAngle: endAngle
-                }))
-                .attr('fill', fillColor)
+            const arcGenerator = d3.arc()
+                .innerRadius(innerRadius - radiusAdjustment)
+                .outerRadius(outerRadius + radiusAdjustment)
+                .startAngle(coverage.startAngle)
+                .endAngle(coverage.endAngle)
+                .cornerRadius(5);
+            
+            // Create arc group
+            const arcGroup = categoryGroup.append('g')
+                .attr('class', 'category-arc-group')
+                .attr('data-category', category.name);
+            
+            // Main arc
+            const arc = arcGroup.append('path')
+                .attr('d', arcGenerator())
+                .attr('fill', this.colors.categoryStrength(coverage.strength))
                 .attr('stroke', '#fff')
                 .attr('stroke-width', 2)
                 .attr('class', 'category-arc')
                 .attr('data-category', category.name)
-                .style('cursor', 'pointer');
+                .style('cursor', 'pointer')
+                .style('opacity', 0.7);
             
-            // Add category labels
-            const labelAngle = (startAngle + endAngle) / 2;
-            const labelRadius = this.categoryRadius + 20;
+            // Add pattern for visual texture
+            if (coverage.strength === 'strong') {
+                const patternId = `pattern-${category.name.replace(/\s/g, '-')}`;
+                const pattern = this.svg.select('defs')
+                    .append('pattern')
+                    .attr('id', patternId)
+                    .attr('patternUnits', 'userSpaceOnUse')
+                    .attr('width', 4)
+                    .attr('height', 4);
+                
+                pattern.append('rect')
+                    .attr('width', 4)
+                    .attr('height', 4)
+                    .attr('fill', this.colors.categoryStrength(coverage.strength));
+                
+                pattern.append('path')
+                    .attr('d', 'M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2')
+                    .attr('stroke', '#fff')
+                    .attr('stroke-width', 0.5)
+                    .attr('opacity', 0.5);
+                
+                arc.style('fill', `url(#${patternId})`);
+            }
+            
+            // Add category label along the arc
+            const labelAngle = (coverage.startAngle + coverage.endAngle) / 2;
+            const labelRadius = outerRadius + radiusAdjustment + 15;
             const labelX = Math.cos(labelAngle) * labelRadius;
             const labelY = Math.sin(labelAngle) * labelRadius;
             
-            categoryGroup.append('text')
-                .attr('transform', `translate(${labelX}, ${labelY})`)
+            // Calculate text rotation
+            let textRotation = (labelAngle * 180 / Math.PI) + 90;
+            if (textRotation > 90 && textRotation < 270) {
+                textRotation += 180;
+            }
+            
+            arcGroup.append('text')
+                .attr('transform', `translate(${labelX}, ${labelY}) rotate(${textRotation})`)
                 .attr('text-anchor', 'middle')
                 .style('font-size', '11px')
                 .style('font-weight', 'bold')
+                .style('fill', '#333')
                 .text(category.shortName || category.name.substring(0, 15))
                 .attr('class', 'category-label');
+            
+            // Add coverage indicator
+            const coverageText = `${coverage.stages.length}/${this.data.stages.length}`;
+            arcGroup.append('text')
+                .attr('transform', `translate(${labelX}, ${labelY}) rotate(${textRotation})`)
+                .attr('text-anchor', 'middle')
+                .attr('dy', '1.2em')
+                .style('font-size', '9px')
+                .style('fill', '#666')
+                .text(coverageText)
+                .attr('class', 'coverage-indicator');
         });
     }
     
@@ -223,7 +411,7 @@ class MaLDReTHRadialVisualization {
         const toolGroup = this.g.append('g')
             .attr('class', 'tool-arcs');
         
-        // Create tool segments for each stage
+        // Create tool segments aligned with their stages
         const angleStep = (2 * Math.PI) / this.data.stages.length;
         
         this.data.stages.forEach((stage, stageIndex) => {
@@ -231,26 +419,30 @@ class MaLDReTHRadialVisualization {
             const tools = this.data.stageTools[stage] || [];
             
             if (tools.length > 0) {
-                const toolArcWidth = angleStep / tools.length;
+                // Create a small arc for each tool
+                const toolArcWidth = (angleStep * 0.8) / tools.length;
+                const toolStartAngle = stageAngle - (angleStep * 0.4);
                 
                 tools.forEach((tool, toolIndex) => {
-                    const startAngle = stageAngle + (toolIndex * toolArcWidth);
-                    const endAngle = stageAngle + ((toolIndex + 1) * toolArcWidth);
+                    const startAngle = toolStartAngle + (toolIndex * toolArcWidth);
+                    const endAngle = startAngle + toolArcWidth * 0.9;
                     
                     const arcGenerator = d3.arc()
-                        .innerRadius(this.toolRadius - 40)
+                        .innerRadius(this.toolRadius - 30)
                         .outerRadius(this.toolRadius)
                         .startAngle(startAngle)
-                        .endAngle(endAngle);
+                        .endAngle(endAngle)
+                        .cornerRadius(2);
                     
-                    toolGroup.append('path')
+                    const toolArc = toolGroup.append('path')
                         .attr('d', arcGenerator())
                         .attr('fill', this.colors.tools(tool.category))
                         .attr('stroke', '#fff')
-                        .attr('stroke-width', 1)
+                        .attr('stroke-width', 0.5)
                         .attr('class', 'tool-arc')
                         .attr('data-tool', tool.name)
                         .attr('data-stage', stage)
+                        .attr('data-category', tool.category)
                         .style('cursor', 'pointer')
                         .style('opacity', 0.8);
                 });
@@ -263,39 +455,50 @@ class MaLDReTHRadialVisualization {
             .attr('class', 'connections')
             .style('pointer-events', 'none');
         
-        // Create radial connections from stages to related categories
-        const angleStep = (2 * Math.PI) / this.data.stages.length;
-        const categoryAngleStep = (2 * Math.PI) / this.data.gorcCategories.length;
-        
-        this.data.stages.forEach((stage, stageIndex) => {
-            const stageAngle = stageIndex * angleStep - Math.PI / 2;
-            const stageX = Math.cos(stageAngle) * this.stageRadius;
-            const stageY = Math.sin(stageAngle) * this.stageRadius;
+        // Create connections from stages to their correlated GORC categories
+        this.data.gorcCategories.forEach(category => {
+            const coverage = this.categoryCoverage[category.name];
+            if (!coverage || coverage.stages.length === 0) return;
             
-            this.data.gorcCategories.forEach((category, catIndex) => {
-                const correlation = this.data.correlations[category.name]?.[stage];
+            coverage.stages.forEach(stageInfo => {
+                const stagePos = this.stagePositions[stageInfo.stage];
+                if (!stagePos) return;
                 
-                if (correlation && correlation.marker) {
-                    const catAngle = (catIndex + 0.5) * categoryAngleStep - Math.PI / 2;
-                    const catRadius = this.categoryRadius - 30;
-                    const catX = Math.cos(catAngle) * catRadius;
-                    const catY = Math.sin(catAngle) * catRadius;
-                    
-                    // Create curved path
-                    const midRadius = (this.stageRadius + catRadius) / 2;
-                    const midX = Math.cos((stageAngle + catAngle) / 2) * midRadius;
-                    const midY = Math.sin((stageAngle + catAngle) / 2) * midRadius;
-                    
-                    const path = connectionGroup.append('path')
-                        .attr('d', `M ${stageX},${stageY} Q ${midX},${midY} ${catX},${catY}`)
-                        .attr('fill', 'none')
-                        .attr('stroke', correlation.marker === 'XX' ? '#ff6b6b' : '#51cf66')
-                        .attr('stroke-width', correlation.marker === 'XX' ? 2 : 1)
-                        .attr('stroke-opacity', 0.3)
-                        .attr('class', 'connection-path')
-                        .attr('data-stage', stage)
-                        .attr('data-category', category.name);
-                }
+                // Calculate arc midpoint for this category
+                const categoryMidAngle = (coverage.startAngle + coverage.endAngle) / 2;
+                const categoryRadius = this.categoryRadius - 25;
+                const categoryX = Math.cos(categoryMidAngle) * categoryRadius;
+                const categoryY = Math.sin(categoryMidAngle) * categoryRadius;
+                
+                // Create ribbon connection
+                const ribbon = d3.ribbon()
+                    .source(() => ({
+                        startAngle: stagePos.angle - 0.05,
+                        endAngle: stagePos.angle + 0.05,
+                        radius: this.stageRadius + 35
+                    }))
+                    .target(() => ({
+                        startAngle: categoryMidAngle - 0.05,
+                        endAngle: categoryMidAngle + 0.05,
+                        radius: categoryRadius
+                    }));
+                
+                // Create curved path instead of ribbon for cleaner look
+                const controlRadius = (this.stageRadius + categoryRadius) / 2;
+                const controlAngle = (stagePos.angle + categoryMidAngle) / 2;
+                const controlX = Math.cos(controlAngle) * controlRadius;
+                const controlY = Math.sin(controlAngle) * controlRadius;
+                
+                const path = connectionGroup.append('path')
+                    .attr('d', `M ${stagePos.x},${stagePos.y} Q ${controlX},${controlY} ${categoryX},${categoryY}`)
+                    .attr('fill', 'none')
+                    .attr('stroke', stageInfo.marker === 'XX' ? '#ff4444' : '#44ff44')
+                    .attr('stroke-width', stageInfo.marker === 'XX' ? 2 : 1)
+                    .attr('stroke-opacity', 0.2)
+                    .attr('class', 'connection-path')
+                    .attr('data-stage', stageInfo.stage)
+                    .attr('data-category', category.name)
+                    .attr('data-strength', stageInfo.marker);
             });
         });
     }
@@ -305,64 +508,88 @@ class MaLDReTHRadialVisualization {
             .attr('class', 'legend')
             .attr('transform', 'translate(50, 50)');
         
-        // Background
-        legendGroup.append('rect')
-            .attr('width', 200)
-            .attr('height', 150)
+        // Background with shadow
+        const legendBg = legendGroup.append('rect')
+            .attr('width', 250)
+            .attr('height', 200)
             .attr('fill', 'white')
             .attr('stroke', '#ddd')
-            .attr('rx', 5);
+            .attr('rx', 5)
+            .style('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))');
         
         // Title
         legendGroup.append('text')
             .attr('x', 10)
-            .attr('y', 20)
+            .attr('y', 25)
             .style('font-weight', 'bold')
             .style('font-size', '14px')
-            .text('Legend');
+            .text('Arc Coverage Legend');
         
         // Legend items
         const items = [
-            { color: '#366092', label: 'MaLDReTH Core' },
-            { color: '#4CAF50', label: 'Lifecycle Stages' },
-            { color: '#ffcccb', label: 'High Correlation' },
-            { color: '#90ee90', label: 'Medium Correlation' },
-            { color: '#e6e6e6', label: 'Low Correlation' }
+            { color: '#366092', label: 'MaLDReTH Core', type: 'circle' },
+            { color: '#4CAF50', label: 'Lifecycle Stages', type: 'circle' },
+            { color: '#ff4444', label: 'Strong Correlation (3+ XX)', type: 'arc' },
+            { color: '#44ff44', label: 'Standard (5+ X)', type: 'arc' },
+            { color: '#ffff44', label: 'Weak (2-4 X)', type: 'arc' },
+            { color: '#f0f0f0', label: 'No Correlation', type: 'arc' }
         ];
         
         items.forEach((item, i) => {
-            const y = 40 + (i * 20);
+            const y = 50 + (i * 25);
             
-            legendGroup.append('rect')
-                .attr('x', 10)
-                .attr('y', y)
-                .attr('width', 15)
-                .attr('height', 15)
-                .attr('fill', item.color);
+            if (item.type === 'circle') {
+                legendGroup.append('circle')
+                    .attr('cx', 20)
+                    .attr('cy', y)
+                    .attr('r', 8)
+                    .attr('fill', item.color);
+            } else {
+                const arcGen = d3.arc()
+                    .innerRadius(5)
+                    .outerRadius(10)
+                    .startAngle(0)
+                    .endAngle(Math.PI);
+                
+                legendGroup.append('path')
+                    .attr('d', arcGen())
+                    .attr('transform', `translate(20, ${y})`)
+                    .attr('fill', item.color);
+            }
             
             legendGroup.append('text')
-                .attr('x', 30)
-                .attr('y', y + 11)
+                .attr('x', 35)
+                .attr('y', y + 4)
                 .style('font-size', '12px')
                 .text(item.label);
         });
+        
+        // Add note about arc width
+        legendGroup.append('text')
+            .attr('x', 10)
+            .attr('y', 185)
+            .style('font-size', '10px')
+            .style('font-style', 'italic')
+            .text('Arc width = coverage across stages');
     }
     
     addInteractivity() {
-        // Tooltip
+        // Enhanced tooltip
         const tooltip = d3.select('body').append('div')
             .attr('class', 'radial-tooltip')
             .style('position', 'absolute')
             .style('visibility', 'hidden')
-            .style('background-color', 'rgba(0, 0, 0, 0.9)')
+            .style('background-color', 'rgba(0, 0, 0, 0.95)')
             .style('color', 'white')
-            .style('padding', '10px')
-            .style('border-radius', '5px')
+            .style('padding', '12px')
+            .style('border-radius', '8px')
             .style('font-size', '12px')
             .style('pointer-events', 'none')
-            .style('z-index', '1000');
+            .style('z-index', '1000')
+            .style('max-width', '300px')
+            .style('box-shadow', '0 4px 8px rgba(0,0,0,0.3)');
         
-        // Stage hover
+        // Stage interaction
         this.g.selectAll('.stage-circle')
             .on('mouseover', function(event, d) {
                 d3.select(this)
@@ -371,12 +598,18 @@ class MaLDReTHRadialVisualization {
                     .attr('r', 40);
                 
                 tooltip.style('visibility', 'visible')
-                    .html(`<strong>${d}</strong><br>Click to highlight connections`);
+                    .html(`
+                        <div style="font-weight: bold; margin-bottom: 5px;">${d}</div>
+                        <div>Click to filter connections</div>
+                        <div style="color: #aaa; font-size: 10px; margin-top: 5px;">
+                            Stage ${d3.select(this.parentNode).datum()} in the lifecycle
+                        </div>
+                    `);
                 
                 // Highlight connections
                 d3.selectAll('.connection-path')
                     .style('stroke-opacity', function(pathData) {
-                        return d3.select(this).attr('data-stage') === d ? 0.8 : 0.1;
+                        return d3.select(this).attr('data-stage') === d ? 0.6 : 0.05;
                     });
             })
             .on('mousemove', function(event) {
@@ -393,7 +626,7 @@ class MaLDReTHRadialVisualization {
                 
                 // Reset connections
                 d3.selectAll('.connection-path')
-                    .style('stroke-opacity', 0.3);
+                    .style('stroke-opacity', 0.2);
             })
             .on('click', function(event, d) {
                 // Toggle stage focus
@@ -408,31 +641,75 @@ class MaLDReTHRadialVisualization {
                         .style('display', function() {
                             return d3.select(this).attr('data-stage') === d ? 'block' : 'none';
                         });
+                    
+                    // Dim non-connected categories
+                    d3.selectAll('.category-arc')
+                        .style('opacity', function() {
+                            const categoryName = d3.select(this).attr('data-category');
+                            const hasConnection = d3.selectAll('.connection-path')
+                                .filter(function() {
+                                    return d3.select(this).attr('data-stage') === d && 
+                                           d3.select(this).attr('data-category') === categoryName;
+                                })
+                                .size() > 0;
+                            return hasConnection ? 0.8 : 0.2;
+                        });
                 } else {
                     // Show all connections
                     d3.selectAll('.connection-path')
                         .style('display', 'block');
+                    
+                    d3.selectAll('.category-arc')
+                        .style('opacity', 0.7);
                 }
             });
         
-        // Category arc hover
+        // Category arc interaction
         this.g.selectAll('.category-arc')
             .on('mouseover', function(event, d) {
                 const categoryName = d3.select(this).attr('data-category');
+                const coverage = this.categoryCoverage[categoryName];
                 
                 d3.select(this)
                     .transition()
                     .duration(200)
-                    .style('opacity', 1)
-                    .attr('stroke-width', 3);
+                    .style('opacity', 1);
+                
+                // Build coverage details
+                let coverageHtml = `<div style="font-weight: bold; margin-bottom: 8px;">${categoryName}</div>`;
+                coverageHtml += `<div style="margin-bottom: 5px;">Coverage: ${coverage.stages.length} stages</div>`;
+                
+                if (coverage.stages.length > 0) {
+                    coverageHtml += '<div style="font-size: 10px; color: #aaa; margin-top: 5px;">Connected stages:</div>';
+                    coverageHtml += '<div style="font-size: 11px;">';
+                    coverage.stages.forEach(s => {
+                        const color = s.marker === 'XX' ? '#ff6666' : '#66ff66';
+                        coverageHtml += `<span style="color: ${color}; margin-right: 5px;">${s.stage.substring(0, 4)}</span>`;
+                    });
+                    coverageHtml += '</div>';
+                }
                 
                 tooltip.style('visibility', 'visible')
-                    .html(`<strong>${categoryName}</strong><br>GORC Service Category`);
+                    .html(coverageHtml);
                 
                 // Highlight related connections
                 d3.selectAll('.connection-path')
                     .style('stroke-opacity', function() {
-                        return d3.select(this).attr('data-category') === categoryName ? 0.8 : 0.1;
+                        return d3.select(this).attr('data-category') === categoryName ? 0.6 : 0.05;
+                    });
+                
+                // Highlight connected stages
+                d3.selectAll('.stage-circle')
+                    .style('stroke-width', function(d) {
+                        const hasConnection = coverage.stages.some(s => s.stage === d);
+                        return hasConnection ? 4 : 2;
+                    })
+                    .style('stroke', function(d) {
+                        const connection = coverage.stages.find(s => s.stage === d);
+                        if (connection) {
+                            return connection.marker === 'XX' ? '#ff4444' : '#44ff44';
+                        }
+                        return '#fff';
                     });
             })
             .on('mousemove', function(event) {
@@ -443,29 +720,39 @@ class MaLDReTHRadialVisualization {
                 d3.select(this)
                     .transition()
                     .duration(200)
-                    .style('opacity', 0.9)
-                    .attr('stroke-width', 2);
+                    .style('opacity', 0.7);
                 
                 tooltip.style('visibility', 'hidden');
                 
                 // Reset connections
                 d3.selectAll('.connection-path')
-                    .style('stroke-opacity', 0.3);
+                    .style('stroke-opacity', 0.2);
+                
+                // Reset stage highlighting
+                d3.selectAll('.stage-circle')
+                    .style('stroke-width', 2)
+                    .style('stroke', '#fff');
             });
         
-        // Tool arc hover
+        // Tool arc interaction
         this.g.selectAll('.tool-arc')
             .on('mouseover', function(event) {
                 const toolName = d3.select(this).attr('data-tool');
                 const stageName = d3.select(this).attr('data-stage');
+                const categoryName = d3.select(this).attr('data-category');
                 
                 d3.select(this)
                     .transition()
                     .duration(200)
-                    .style('opacity', 1);
+                    .style('opacity', 1)
+                    .attr('transform', 'scale(1.1)');
                 
                 tooltip.style('visibility', 'visible')
-                    .html(`<strong>${toolName}</strong><br>Stage: ${stageName}`);
+                    .html(`
+                        <div style="font-weight: bold; margin-bottom: 5px;">${toolName}</div>
+                        <div style="color: #66ff66;">Stage: ${stageName}</div>
+                        <div style="color: #ffff66;">Category: ${categoryName}</div>
+                    `);
             })
             .on('mousemove', function(event) {
                 tooltip.style('top', (event.pageY - 10) + 'px')
@@ -475,10 +762,39 @@ class MaLDReTHRadialVisualization {
                 d3.select(this)
                     .transition()
                     .duration(200)
-                    .style('opacity', 0.8);
+                    .style('opacity', 0.8)
+                    .attr('transform', 'scale(1)');
                 
                 tooltip.style('visibility', 'hidden');
             });
+        
+        // Make categoryCoverage accessible to interaction functions
+        const categoryCoverage = this.categoryCoverage;
+        this.g.selectAll('.category-arc').each(function() {
+            this.categoryCoverage = categoryCoverage;
+        });
+    }
+    
+    // Public method to highlight specific categories
+    highlightCategory(categoryName) {
+        // Dim all categories except the selected one
+        d3.selectAll('.category-arc')
+            .style('opacity', function() {
+                return d3.select(this).attr('data-category') === categoryName ? 0.9 : 0.2;
+            });
+        
+        // Show only connections for this category
+        d3.selectAll('.connection-path')
+            .style('stroke-opacity', function() {
+                return d3.select(this).attr('data-category') === categoryName ? 0.6 : 0;
+            });
+    }
+    
+    // Public method to reset view
+    resetView() {
+        d3.selectAll('.category-arc').style('opacity', 0.7);
+        d3.selectAll('.connection-path').style('stroke-opacity', 0.2).style('display', 'block');
+        d3.selectAll('.stage-circle').classed('active', false).style('stroke-width', 2).style('stroke', '#fff');
     }
 }
 
@@ -488,23 +804,37 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('/api/radial-visualization-data')
         .then(response => response.json())
         .then(data => {
-            const visualization = new MaLDReTHRadialVisualization('#radial-viz', data);
+            window.radialViz = new MaLDReTHRadialVisualization('#radial-viz', data);
             
             // Add control buttons
             document.getElementById('reset-viz').addEventListener('click', () => {
-                visualization.init();
+                window.radialViz.resetView();
             });
             
             document.getElementById('show-all-connections').addEventListener('click', () => {
                 d3.selectAll('.connection-path')
                     .style('display', 'block')
-                    .style('stroke-opacity', 0.3);
+                    .style('stroke-opacity', 0.2);
+                d3.selectAll('.category-arc')
+                    .style('opacity', 0.7);
             });
             
             document.getElementById('hide-connections').addEventListener('click', () => {
                 d3.selectAll('.connection-path')
                     .style('display', 'none');
             });
+            
+            // Add category filter buttons
+            const filterContainer = document.getElementById('category-filters');
+            if (filterContainer) {
+                data.gorcCategories.forEach(category => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
+                    btn.textContent = category.shortName;
+                    btn.onclick = () => window.radialViz.highlightCategory(category.name);
+                    filterContainer.appendChild(btn);
+                });
+            }
         })
         .catch(error => {
             console.error('Error loading visualization data:', error);
