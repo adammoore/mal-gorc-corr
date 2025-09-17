@@ -332,9 +332,8 @@ class MaLDReTHRadialVisualization {
         categoriesWithCoverage.forEach((category, index) => {
             const coverage = category.coverage;
 
-            // Assign to rings - stronger correlations get inner rings
-            const ringIndex = index % 3;
-            const categoryRadius = this.categoryBaseRadius + (ringIndex * 60);
+            // Assign each category to its own unique ring - no overlapping
+            const categoryRadius = this.categoryBaseRadius + (index * 35);
 
             // Use pre-calculated coverage angles from calculateCategoryCoverage()
             let startAngle = coverage.startAngle;
@@ -951,15 +950,26 @@ document.addEventListener('DOMContentLoaded', function() {
             function filterCategoryArcs(categoryName) {
                 console.log('Filtering for category:', categoryName);
 
-                // Dim all category arcs
-                d3.selectAll('.category-arc').style('opacity', 0.1);
+                // Debug: Check what arcs exist
+                const allArcs = d3.selectAll('.category-arc');
+                console.log('Total arcs found:', allArcs.size());
+                allArcs.each(function() {
+                    console.log('Arc data-category:', d3.select(this).attr('data-category'));
+                });
 
-                // Highlight selected category arc
-                d3.selectAll('.category-arc')
+                // Dim all category arc groups
+                d3.selectAll('.category-arc-group').style('opacity', 0.1);
+
+                // Highlight selected category arc group
+                const matchingGroups = d3.selectAll('.category-arc-group')
                     .filter(function() {
-                        return d3.select(this).attr('data-category') === categoryName;
+                        const dataCategory = d3.select(this).attr('data-category');
+                        console.log('Checking group data-category:', dataCategory, 'vs', categoryName);
+                        return dataCategory === categoryName;
                     })
                     .style('opacity', 0.9);
+
+                console.log('Matching groups found:', matchingGroups.size());
 
                 // Hide all connections except for this category
                 d3.selectAll('.connection-path').style('display', 'none');
@@ -974,7 +984,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Simple reset function
             function resetCategoryView() {
                 console.log('Resetting category view');
-                d3.selectAll('.category-arc').style('opacity', 0.7);
+                d3.selectAll('.category-arc-group').style('opacity', 0.7);
                 d3.selectAll('.connection-path')
                     .style('display', 'block')
                     .style('stroke-opacity', 0.15);
