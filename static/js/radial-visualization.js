@@ -13,9 +13,9 @@ class MaLDReTHRadialVisualization {
         this.height = 1400;
         this.centerRadius = 80;
         this.stageRadius = 180;
-        this.categoryBaseRadius = 280;
+        this.categoryBaseRadius = 320; // Moved further out to avoid stage overlap
         this.categoryRingSpacing = 50;
-        this.toolRadius = 480;
+        this.toolRadius = 520; // Moved out to accommodate GORC arcs
         this.categoryRings = 3; // Number of concentric rings for categories
         this.colors = {
             stages: d3.scaleOrdinal()
@@ -24,6 +24,8 @@ class MaLDReTHRadialVisualization {
             categoryStrength: d3.scaleOrdinal()
                 .domain(['strong', 'standard', 'weak', 'none'])
                 .range(['#ff4444', '#44ff44', '#ffff44', '#f0f0f0']),
+            gorcCategories: d3.scaleOrdinal()
+                .range(['#2E8B57', '#3CB371', '#66CDAA', '#8FBC8F', '#98FB98', '#90EE90', '#ADFF2F', '#7CFC00', '#32CD32']), // Green variations
             tools: d3.scaleOrdinal()
                 .range(d3.schemeSet3)
         };
@@ -333,7 +335,7 @@ class MaLDReTHRadialVisualization {
             const coverage = category.coverage;
 
             // Assign each category to its own unique ring with tighter spacing
-            const categoryRadius = this.categoryBaseRadius + (index * 25);
+            const categoryRadius = this.categoryBaseRadius + (index * 20); // Even tighter spacing
 
             // Use pre-calculated coverage angles from calculateCategoryCoverage()
             let startAngle = coverage.startAngle;
@@ -347,9 +349,9 @@ class MaLDReTHRadialVisualization {
                 endAngle = center + minArcSize / 2;
             }
 
-            // Create very thin arc generator to avoid overlap with research tools
-            const innerRadius = categoryRadius - 8; // Even thinner
-            const outerRadius = categoryRadius + 8; // Even thinner
+            // Create thinner arcs with better spacing
+            const innerRadius = categoryRadius - 6; // Thinner
+            const outerRadius = categoryRadius + 6; // Thinner
 
             const arcGenerator = d3.arc()
                 .innerRadius(innerRadius)
@@ -363,16 +365,16 @@ class MaLDReTHRadialVisualization {
                 .attr('class', 'category-arc-group')
                 .attr('data-category', category.name);
 
-            // Main arc
+            // Main arc with varied colors
             const arc = arcGroup.append('path')
                 .attr('d', arcGenerator())
-                .attr('fill', this.colors.categoryStrength(coverage.strength))
+                .attr('fill', this.colors.gorcCategories(index)) // Use varied green colors
                 .attr('stroke', '#fff')
                 .attr('stroke-width', 1)
                 .attr('class', 'category-arc')
                 .attr('data-category', category.name)
                 .style('cursor', 'pointer')
-                .style('opacity', 0.7);
+                .style('opacity', 0.8); // Slightly more opaque for better visibility
 
             // Add pattern for strong correlations
             if (coverage.strength === 'strong') {
@@ -871,20 +873,42 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             window.radialViz = new MaLDReTHRadialVisualization('#radial-viz', data);
             
-            // Add control buttons
+            // Add control buttons with proper functionality
             document.getElementById('reset-viz').addEventListener('click', () => {
-                window.radialViz.resetView();
-            });
-            
-            document.getElementById('show-all-connections').addEventListener('click', () => {
+                console.log('Reset View clicked');
+                // Reset all visual states to default
+                d3.selectAll('.category-arc-group').style('opacity', 0.8);
                 d3.selectAll('.connection-path')
                     .style('display', 'block')
-                    .style('stroke-opacity', 0.2);
-                d3.selectAll('.category-arc')
-                    .style('opacity', 0.7);
+                    .style('stroke-opacity', 0.15);
+                d3.selectAll('.stage-circle')
+                    .style('stroke-width', 2)
+                    .style('stroke', '#ccc');
+
+                // Reset all filter buttons
+                const filterContainer = document.getElementById('category-filters');
+                if (filterContainer) {
+                    filterContainer.querySelectorAll('button').forEach(b => {
+                        if (b.getAttribute('data-category')) {
+                            b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
+                        } else if (b.textContent === 'Show All') {
+                            b.className = 'btn btn-sm btn-outline-secondary me-1 mb-1';
+                        }
+                    });
+                }
             });
-            
+
+            document.getElementById('show-all-connections').addEventListener('click', () => {
+                console.log('Show All clicked');
+                d3.selectAll('.connection-path')
+                    .style('display', 'block')
+                    .style('stroke-opacity', 0.3); // More visible
+                d3.selectAll('.category-arc-group')
+                    .style('opacity', 0.8);
+            });
+
             document.getElementById('hide-connections').addEventListener('click', () => {
+                console.log('Hide Lines clicked');
                 d3.selectAll('.connection-path')
                     .style('display', 'none');
             });
@@ -904,37 +928,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 console.log('Creating filter buttons for:', validCategories.map(c => c.shortName));
 
-                // Use event delegation instead of individual event listeners
+                // Use event delegation with better debugging
                 filterContainer.addEventListener('click', function(event) {
+                    console.log('Click event on container:', event.target);
+
                     if (event.target.tagName === 'BUTTON') {
+                        event.preventDefault();
+                        event.stopPropagation();
+
                         const categoryName = event.target.getAttribute('data-category');
-                        console.log('Event delegation - Button clicked for:', categoryName);
+                        console.log('Button clicked. Category:', categoryName, 'Text:', event.target.textContent);
 
                         if (categoryName) {
-                            // Reset all buttons
-                            filterContainer.querySelectorAll('button').forEach(b => {
-                                if (b.getAttribute('data-category')) { // Only reset category buttons
-                                    b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
-                                }
+                            console.log('Processing category filter for:', categoryName);
+
+                            // Reset all category buttons
+                            filterContainer.querySelectorAll('button[data-category]').forEach(b => {
+                                b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
                             });
 
                             // Set this button to active
                             event.target.className = 'btn btn-sm btn-primary me-1 mb-1';
 
                             // Call filter function
+                            console.log('Calling filterCategoryArcs with:', categoryName);
                             filterCategoryArcs(categoryName);
-                        } else if (event.target.textContent === 'Show All') {
-                            // Reset button clicked
-                            filterContainer.querySelectorAll('button').forEach(b => {
-                                if (b.getAttribute('data-category')) {
-                                    b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
-                                }
+
+                        } else if (event.target.textContent.trim() === 'Show All') {
+                            console.log('Processing Show All');
+
+                            // Reset all category buttons
+                            filterContainer.querySelectorAll('button[data-category]').forEach(b => {
+                                b.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
                             });
                             event.target.className = 'btn btn-sm btn-secondary me-1 mb-1';
+
+                            console.log('Calling resetCategoryView');
                             resetCategoryView();
                         }
                     }
-                });
+                }, true); // Use capture phase
 
                 // Create buttons with simpler approach
                 validCategories.forEach((category, index) => {
