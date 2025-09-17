@@ -14,8 +14,8 @@ class MaLDReTHRadialVisualization {
         this.centerRadius = 80;
         this.stageRadius = 180;
         this.categoryBaseRadius = 280;
-        this.categoryRingSpacing = 30;
-        this.toolRadius = 550;
+        this.categoryRingSpacing = 40;
+        this.toolRadius = 480;
         this.categoryRings = 3; // Number of concentric rings for categories
         this.colors = {
             stages: d3.scaleOrdinal()
@@ -338,7 +338,7 @@ class MaLDReTHRadialVisualization {
             const baseRadius = this.categoryBaseRadius + (ringIndex * this.categoryRingSpacing);
 
             // Create arc generator with ring-specific radii
-            const innerRadius = baseRadius - 20;
+            const innerRadius = baseRadius - 15;
             const outerRadius = baseRadius + 15;
 
             // Adjust radius based on strength (smaller adjustments now)
@@ -538,7 +538,7 @@ class MaLDReTHRadialVisualization {
     createLegend() {
         const legendGroup = this.svg.append('g')
             .attr('class', 'legend')
-            .attr('transform', `translate(50, ${this.height - 250})`);
+            .attr('transform', `translate(50, ${this.height - 400})`);
         
         // Background with shadow
         const legendBg = legendGroup.append('rect')
@@ -782,17 +782,21 @@ class MaLDReTHRadialVisualization {
         
         // Tool arc interaction
         this.g.selectAll('.tool-arc')
-            .on('mouseover', function(event) {
-                const toolName = d3.select(this).attr('data-tool');
-                const stageName = d3.select(this).attr('data-stage');
-                const categoryName = d3.select(this).attr('data-category');
-                
-                d3.select(this)
-                    .transition()
-                    .duration(200)
-                    .style('opacity', 1)
-                    .attr('transform', 'scale(1.1)');
-                
+            .on('mouseenter', function(event) {
+                const element = d3.select(this);
+                const toolName = element.attr('data-tool');
+                const stageName = element.attr('data-stage');
+                const categoryName = element.attr('data-category');
+
+                // Only animate if not already scaled
+                if (!element.classed('hovered')) {
+                    element.classed('hovered', true)
+                        .transition()
+                        .duration(150)
+                        .style('opacity', 1)
+                        .style('transform', 'scale(1.05)');
+                }
+
                 tooltip.style('visibility', 'visible')
                     .html(`
                         <div style="font-weight: bold; margin-bottom: 5px;">${toolName}</div>
@@ -804,13 +808,14 @@ class MaLDReTHRadialVisualization {
                 tooltip.style('top', (event.pageY - 10) + 'px')
                     .style('left', (event.pageX + 10) + 'px');
             })
-            .on('mouseout', function() {
-                d3.select(this)
+            .on('mouseleave', function() {
+                const element = d3.select(this);
+                element.classed('hovered', false)
                     .transition()
-                    .duration(200)
+                    .duration(150)
                     .style('opacity', 0.8)
-                    .attr('transform', 'scale(1)');
-                
+                    .style('transform', 'scale(1)');
+
                 tooltip.style('visibility', 'hidden');
             });
         
