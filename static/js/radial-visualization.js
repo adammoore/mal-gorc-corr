@@ -336,19 +336,9 @@ class MaLDReTHRadialVisualization {
             const ringIndex = index % 3;
             const categoryRadius = this.categoryBaseRadius + (ringIndex * 60);
 
-            // Calculate arc span based on actual stage coverage
-            const stageAngles = coverage.stages.map(stageName => {
-                const stageIndex = this.data.stages.indexOf(stageName);
-                return (stageIndex * 2 * Math.PI / this.data.stages.length) - Math.PI / 2;
-            }).sort((a, b) => a - b);
-
-            let startAngle = stageAngles[0];
-            let endAngle = stageAngles[stageAngles.length - 1];
-
-            // Handle wrap-around (e.g., if stages go from 11 to 1)
-            if (endAngle - startAngle > Math.PI) {
-                [startAngle, endAngle] = [endAngle, startAngle + 2 * Math.PI];
-            }
+            // Use pre-calculated coverage angles from calculateCategoryCoverage()
+            let startAngle = coverage.startAngle;
+            let endAngle = coverage.endAngle;
 
             // Ensure minimum arc size for visibility
             const minArcSize = 0.3;
