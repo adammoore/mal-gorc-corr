@@ -435,6 +435,112 @@ def index():
     """
     return render_template('index.html')
 
+@app.route('/radial')
+def radial_visualization():
+    """
+    Render the radial visualization page.
+    
+    Returns:
+        str: Rendered HTML template for radial visualization
+    """
+    return render_template('radial_visualization.html')
+
+
+@app.route('/api/radial-visualization-data')
+def get_radial_visualization_data():
+    """
+    API endpoint to retrieve data formatted for radial visualization.
+    
+    Returns:
+        Response: JSON response containing visualization data
+    """
+    try:
+        # Prepare GORC categories with short names
+        gorc_categories = [
+            {'name': 'Research Object Repositories', 'shortName': 'Repositories'},
+            {'name': 'Discovery Services', 'shortName': 'Discovery'},
+            {'name': 'Services and Tools for Direct Research Tasks', 'shortName': 'Direct Tools'},
+            {'name': 'Services and Tools that Enable Workflows and Middleware', 'shortName': 'Workflows'},
+            {'name': 'Vocabulary and Semantic Object Services', 'shortName': 'Vocabulary'},
+            {'name': 'Commons Catalogues of All Services and Tools', 'shortName': 'Catalogues'},
+            {'name': 'Persistent Identifier Services', 'shortName': 'PIDs'},
+            {'name': 'Security and Identification Services (AAI)', 'shortName': 'AAI'},
+            {'name': 'Helpdesk Services', 'shortName': 'Helpdesk'}
+        ]
+        
+        # Sample tool data for each stage
+        stage_tools = {
+            'CONCEPTUALIZE': [
+                {'name': 'Miro', 'category': 'Mind Mapping'},
+                {'name': 'Lucidchart', 'category': 'Diagramming'},
+                {'name': 'XMind', 'category': 'Mind Mapping'}
+            ],
+            'PLAN': [
+                {'name': 'DMP Tool', 'category': 'Data Management'},
+                {'name': 'Trello', 'category': 'Project Planning'},
+                {'name': 'Asana', 'category': 'Project Planning'}
+            ],
+            'COLLECT': [
+                {'name': 'Open Data Kit', 'category': 'Data Collection'},
+                {'name': 'SurveyMonkey', 'category': 'Surveys'},
+                {'name': 'REDCap', 'category': 'Data Collection'}
+            ],
+            'PROCESS': [
+                {'name': 'Jupyter', 'category': 'Computing'},
+                {'name': 'RSpace', 'category': 'ELN'},
+                {'name': 'LabArchives', 'category': 'ELN'}
+            ],
+            'ANALYSE': [
+                {'name': 'SPSS', 'category': 'Statistics'},
+                {'name': 'R Studio', 'category': 'Statistics'},
+                {'name': 'Python', 'category': 'Computing'}
+            ],
+            'STORE': [
+                {'name': 'Figshare', 'category': 'Repository'},
+                {'name': 'Zenodo', 'category': 'Repository'},
+                {'name': 'Dataverse', 'category': 'Repository'}
+            ],
+            'PUBLISH': [
+                {'name': 'DRYAD', 'category': 'Repository'},
+                {'name': 'GBIF', 'category': 'Domain Repository'},
+                {'name': 'DataCite', 'category': 'Metadata'}
+            ],
+            'PRESERVE': [
+                {'name': 'Archivematica', 'category': 'Archive'},
+                {'name': 'Docker', 'category': 'Containers'},
+                {'name': 'Preservica', 'category': 'Archive'}
+            ],
+            'SHARE': [
+                {'name': 'GitHub', 'category': 'Code Sharing'},
+                {'name': 'OSF', 'category': 'Collaboration'},
+                {'name': 'Zenodo', 'category': 'Repository'}
+            ],
+            'ACCESS': [
+                {'name': 'LDAP', 'category': 'Authentication'},
+                {'name': 'Shibboleth', 'category': 'Authentication'},
+                {'name': 'OAuth', 'category': 'Authentication'}
+            ],
+            'TRANSFORM': [
+                {'name': 'Apache Spark', 'category': 'ETL'},
+                {'name': 'Python', 'category': 'Programming'},
+                {'name': 'Talend', 'category': 'ETL'}
+            ]
+        }
+        
+        response_data = {
+            'stages': MALDRETH_STAGES,
+            'gorcCategories': gorc_categories,
+            'correlations': CORRELATION_DATA,
+            'stageTools': stage_tools,
+            'concentrations': STAGE_CONCENTRATIONS
+        }
+        
+        return jsonify(response_data), 200
+        
+    except Exception as e:
+        logger.error(f"Error generating radial visualization data: {str(e)}")
+        return jsonify({'error': 'Failed to generate visualization data'}), 500
+
 
 @app.route('/api/correlation-data')
 def get_correlation_data():
@@ -475,7 +581,8 @@ def export_excel():
             excel_buffer,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             as_attachment=True,
-            download_name=filename
+            download_name=filename,
+            cache_timeout=0
         )
     except Exception as e:
         logger.error(f"Error exporting to Excel: {str(e)}")

@@ -166,3 +166,61 @@ TECHNICAL CHANGES:
 - Enhanced CSS for better visual presentation
 - Improved data attribute usage in HTML for tooltip content
 
+===================================
+Version 1.2.0 - Radial Visualization Added
+Date: 2024
+Developer: Research Data Lifecycle Team
+
+CHANGES MADE:
+============
+
+1. Created Radial Visualization
+   - Implemented D3.js-based circular visualization
+   - MaLDReTH stages at center in inner ring
+   - GORC categories as middle arc segments
+   - Research tools in outer ring segments
+   - Interactive connections showing relationships
+
+2. Visual Design Elements
+   - Center hub with MaLDReTH branding
+   - Color-coded correlation strength
+   - Curved connection paths with opacity
+   - Zoom and pan functionality
+   - Responsive SVG scaling
+
+3. Interactivity Features
+   - Hover tooltips for all elements
+   - Click stages to filter connections
+   - Highlight related elements on hover
+   - Control panel for view management
+   - Export to SVG and PNG formats
+
+4. Data Structure
+   - Added radial-specific API endpoint
+   - Included tool categorization by stage
+   - Short names for better visualization
+   - Sample tool data for demonstration
+
+5. Visual Encoding
+   - Position: Radial hierarchy (center to edge)
+   - Color: Correlation strength indicators
+   - Size: Importance and grouping
+   - Lines: Relationship strength
+
+TECHNICAL IMPLEMENTATION:
+========================
+
+- Used D3.js v7 for visualization
+- Implemented arc generators for segments
+- Created curved path connections
+- Added zoom behavior with constraints
+- Responsive design with viewBox
+
+UI IMPROVEMENTS:
+===============
+
+- Statistics cards showing counts
+- Legend with color explanations
+- Control buttons for interaction
+- Export functionality (SVG/PNG)
+- Gradient background for visual appeal
