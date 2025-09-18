@@ -25,7 +25,11 @@ class MaLDReTHRadialVisualization {
                 .domain(['strong', 'standard', 'weak', 'none'])
                 .range(['#ff4444', '#44ff44', '#ffff44', '#f0f0f0']),
             gorcCategories: d3.scaleOrdinal()
-                .range(['#2E8B57', '#3CB371', '#66CDAA', '#8FBC8F', '#98FB98', '#90EE90', '#ADFF2F', '#7CFC00', '#32CD32']), // Green variations
+                .range([
+                    '#2E8B57', '#3CB371', '#66CDAA', '#8FBC8F', '#98FB98',
+                    '#90EE90', '#ADFF2F', '#7CFC00', '#32CD32', '#228B22',
+                    '#006400', '#008000', '#00FF00', '#7FFF00', '#9AFF9A'
+                ]), // Extended green variations for revised structure (up to 15 categories)
             tools: d3.scaleOrdinal()
                 .range(d3.schemeSet3)
         };
@@ -72,7 +76,7 @@ class MaLDReTHRadialVisualization {
         this.createDynamicCategoryArcs();
         this.createToolArcs();
         this.createConnections();
-        this.createLegend();
+        // this.createLegend(); // Commented out per user request
         this.addInteractivity();
     }
     
@@ -111,18 +115,17 @@ class MaLDReTHRadialVisualization {
                 }
             });
             
-            // Calculate angular coverage
+            // Calculate angular coverage with support for broken arcs
             if (coverage.stages.length > 0) {
                 const angleStep = (2 * Math.PI) / this.data.stages.length;
-                const firstIndex = coverage.stages[0].index;
-                const lastIndex = coverage.stages[coverage.stages.length - 1].index;
-                
-                // Check if the arc should wrap around (e.g., from stage 11 to stage 1)
+
+                // Group consecutive stages into runs for broken arc segments
                 let spanIndices = [];
                 let currentRun = [coverage.stages[0].index];
-                
+
                 for (let i = 1; i < coverage.stages.length; i++) {
-                    if (coverage.stages[i].index - coverage.stages[i-1].index <= 2) {
+                    // Adjacent stages (difference of 1) are continuous
+                    if (coverage.stages[i].index - coverage.stages[i-1].index <= 1) {
                         currentRun.push(coverage.stages[i].index);
                     } else {
                         spanIndices.push(currentRun);
@@ -130,13 +133,27 @@ class MaLDReTHRadialVisualization {
                     }
                 }
                 spanIndices.push(currentRun);
-                
-                // Use the longest continuous run
-                const longestRun = spanIndices.reduce((a, b) => a.length > b.length ? a : b);
-                
-                coverage.startAngle = (Math.min(...longestRun) * angleStep) - Math.PI / 2 - angleStep / 4;
-                coverage.endAngle = (Math.max(...longestRun) * angleStep) - Math.PI / 2 + angleStep / 4;
-                
+
+                // Create arc segments for each continuous run (broken arcs)
+                coverage.arcSegments = spanIndices.map(run => {
+                    const startStageIndex = Math.min(...run);
+                    const endStageIndex = Math.max(...run);
+
+                    return {
+                        startAngle: (startStageIndex * angleStep) - Math.PI / 2 - angleStep / 2,
+                        endAngle: (endStageIndex * angleStep) - Math.PI / 2 + angleStep / 2,
+                        stages: run.map(idx => coverage.stages.find(s => s.index === idx))
+                    };
+                });
+
+                // For backward compatibility, set primary arc to the first/longest segment
+                const primarySegment = spanIndices.reduce((a, b) => a.length > b.length ? a : b);
+                const startStageIndex = Math.min(...primarySegment);
+                const endStageIndex = Math.max(...primarySegment);
+
+                coverage.startAngle = (startStageIndex * angleStep) - Math.PI / 2 - angleStep / 2;
+                coverage.endAngle = (endStageIndex * angleStep) - Math.PI / 2 + angleStep / 2;
+
                 // Determine overall strength
                 if (coverage.strongCount >= 3) {
                     coverage.strength = 'strong';
@@ -337,70 +354,103 @@ class MaLDReTHRadialVisualization {
             // Assign each category to its own unique ring with tighter spacing
             const categoryRadius = this.categoryBaseRadius + (index * 20); // Even tighter spacing
 
-            // Use pre-calculated coverage angles from calculateCategoryCoverage()
-            let startAngle = coverage.startAngle;
-            let endAngle = coverage.endAngle;
-
-            // Ensure minimum arc size for visibility
-            const minArcSize = 0.3;
-            if (endAngle - startAngle < minArcSize) {
-                const center = (startAngle + endAngle) / 2;
-                startAngle = center - minArcSize / 2;
-                endAngle = center + minArcSize / 2;
-            }
-
             // Create thinner arcs with better spacing
             const innerRadius = categoryRadius - 6; // Thinner
             const outerRadius = categoryRadius + 6; // Thinner
 
-            const arcGenerator = d3.arc()
-                .innerRadius(innerRadius)
-                .outerRadius(outerRadius)
-                .startAngle(startAngle)
-                .endAngle(endAngle)
-                .cornerRadius(2);
-
-            // Create arc group
+            // Create arc group for this category
             const arcGroup = categoryGroup.append('g')
                 .attr('class', 'category-arc-group')
                 .attr('data-category', category.name);
 
-            // Main arc with varied colors
-            const arc = arcGroup.append('path')
-                .attr('d', arcGenerator())
-                .attr('fill', this.colors.gorcCategories(index)) // Use varied green colors
-                .attr('stroke', '#fff')
-                .attr('stroke-width', 1)
-                .attr('class', 'category-arc')
-                .attr('data-category', category.name)
-                .style('cursor', 'pointer')
-                .style('opacity', 0.8); // Slightly more opaque for better visibility
+            // Create broken arcs for each segment (non-adjacent stage coverage)
+            if (coverage.arcSegments && coverage.arcSegments.length > 0) {
+                coverage.arcSegments.forEach((segment, segmentIndex) => {
+                    let startAngle = segment.startAngle;
+                    let endAngle = segment.endAngle;
 
-            // Add pattern for strong correlations
-            if (coverage.strength === 'strong') {
-                const patternId = `pattern-${category.name.replace(/\s/g, '-')}`;
-                const pattern = this.defs.append('pattern')
-                    .attr('id', patternId)
-                    .attr('patternUnits', 'userSpaceOnUse')
-                    .attr('width', 4)
-                    .attr('height', 4);
+                    // Ensure minimum arc size for visibility
+                    const minArcSize = 0.15;
+                    if (endAngle - startAngle < minArcSize) {
+                        const center = (startAngle + endAngle) / 2;
+                        startAngle = center - minArcSize / 2;
+                        endAngle = center + minArcSize / 2;
+                    }
 
-                pattern.append('rect')
-                    .attr('width', 4)
-                    .attr('height', 4)
-                    .attr('fill', this.colors.categoryStrength(coverage.strength));
+                    const arcGenerator = d3.arc()
+                        .innerRadius(innerRadius)
+                        .outerRadius(outerRadius)
+                        .startAngle(startAngle)
+                        .endAngle(endAngle)
+                        .cornerRadius(2);
 
-                pattern.append('path')
-                    .attr('d', 'M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2')
+                    // Create individual arc segment
+                    const arc = arcGroup.append('path')
+                        .attr('d', arcGenerator())
+                        .attr('fill', this.colors.gorcCategories(index)) // Use varied green colors
+                        .attr('stroke', '#fff')
+                        .attr('stroke-width', 1)
+                        .attr('class', 'category-arc')
+                        .attr('data-category', category.name)
+                        .attr('data-segment', segmentIndex)
+                        .style('cursor', 'pointer')
+                        .style('opacity', 0.8);
+
+                    // Add pattern for strong correlations
+                    if (coverage.strength === 'strong') {
+                        const patternId = `pattern-${category.name.replace(/\s/g, '-')}-${segmentIndex}`;
+                        const pattern = this.defs.append('pattern')
+                            .attr('id', patternId)
+                            .attr('patternUnits', 'userSpaceOnUse')
+                            .attr('width', 4)
+                            .attr('height', 4);
+
+                        pattern.append('rect')
+                            .attr('width', 4)
+                            .attr('height', 4)
+                            .attr('fill', this.colors.categoryStrength(coverage.strength));
+
+                        pattern.append('path')
+                            .attr('d', 'M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2')
+                            .attr('stroke', '#fff')
+                            .attr('stroke-width', 0.5)
+                            .attr('opacity', 0.5);
+
+                        arc.style('fill', `url(#${patternId})`);
+                    }
+                });
+            } else {
+                // Fallback: single arc if no segments are defined
+                let startAngle = coverage.startAngle;
+                let endAngle = coverage.endAngle;
+
+                const minArcSize = 0.3;
+                if (endAngle - startAngle < minArcSize) {
+                    const center = (startAngle + endAngle) / 2;
+                    startAngle = center - minArcSize / 2;
+                    endAngle = center + minArcSize / 2;
+                }
+
+                const arcGenerator = d3.arc()
+                    .innerRadius(innerRadius)
+                    .outerRadius(outerRadius)
+                    .startAngle(startAngle)
+                    .endAngle(endAngle)
+                    .cornerRadius(2);
+
+                const arc = arcGroup.append('path')
+                    .attr('d', arcGenerator())
+                    .attr('fill', this.colors.gorcCategories(index))
                     .attr('stroke', '#fff')
-                    .attr('stroke-width', 0.5)
-                    .attr('opacity', 0.5);
-
-                arc.style('fill', `url(#${patternId})`);
+                    .attr('stroke-width', 1)
+                    .attr('class', 'category-arc')
+                    .attr('data-category', category.name)
+                    .style('cursor', 'pointer')
+                    .style('opacity', 0.8);
             }
 
-            // Position label at the center of the arc span (closer to arc)
-            const labelAngle = (startAngle + endAngle) / 2;
+            // Position label at the center of the primary arc span (closer to arc)
+            const labelAngle = (coverage.startAngle + coverage.endAngle) / 2;
             const labelRadius = outerRadius + 18; // Closer to arc
             const labelX = Math.cos(labelAngle) * labelRadius;
             const labelY = Math.sin(labelAngle) * labelRadius;
@@ -565,16 +615,17 @@ class MaLDReTHRadialVisualization {
             .attr('y', 25)
             .style('font-weight', 'bold')
             .style('font-size', '14px')
-            .text('Arc Coverage Legend');
+            .text('GORC Categories Legend');
         
-        // Legend items
+        // Legend items - show actual GORC categories with their colors
         const items = [
             { color: '#366092', label: 'MaLDReTH Core', type: 'circle' },
             { color: '#4CAF50', label: 'Lifecycle Stages', type: 'circle' },
-            { color: '#ff4444', label: 'Strong Correlation (3+ XX)', type: 'arc' },
-            { color: '#44ff44', label: 'Standard (5+ X)', type: 'arc' },
-            { color: '#ffff44', label: 'Weak (2-4 X)', type: 'arc' },
-            { color: '#ddd', label: 'Research Tools', type: 'arc' }
+            ...this.data.gorcCategories.map((category, i) => ({
+                color: this.colors.gorcCategories(category.name),
+                label: category.shortName || category.name,
+                type: 'arc'
+            }))
         ];
         
         items.forEach((item, i) => {
@@ -606,27 +657,36 @@ class MaLDReTHRadialVisualization {
                 .text(item.label);
         });
         
-        // Add notes about visualization structure (with proper spacing)
+        // Add notes about visualization structure (with adjusted spacing for more legend items)
+        const structureStartY = 50 + (items.length * 25) + 20;
+
         legendGroup.append('text')
             .attr('x', 10)
-            .attr('y', 205)
+            .attr('y', structureStartY)
             .style('font-size', '10px')
             .style('font-weight', 'bold')
-            .text('Multi-ring structure:');
+            .text('Visualization Structure:');
 
         legendGroup.append('text')
             .attr('x', 10)
-            .attr('y', 218)
+            .attr('y', structureStartY + 15)
             .style('font-size', '9px')
             .style('font-style', 'italic')
-            .text('Categories separated by strength');
+            .text('Inner: Lifecycle stages');
 
         legendGroup.append('text')
             .attr('x', 10)
-            .attr('y', 230)
+            .attr('y', structureStartY + 28)
             .style('font-size', '9px')
             .style('font-style', 'italic')
-            .text('across multiple concentric rings');
+            .text('Middle: GORC categories');
+
+        legendGroup.append('text')
+            .attr('x', 10)
+            .attr('y', structureStartY + 41)
+            .style('font-size', '9px')
+            .style('font-style', 'italic')
+            .text('Outer: Research tools');
     }
     
     addInteractivity() {

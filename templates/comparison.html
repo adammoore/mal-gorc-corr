@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GORC Structure Comparison - Original vs Revised (Sept 2025)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .comparison-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 1400px;
+        }
+
+        .structure-card {
+            border: 2px solid #dee2e6;
+            border-radius: 15px;
+            padding: 20px;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .structure-card.original {
+            border-color: #366092;
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+        }
+
+        .structure-card.revised {
+            border-color: #28a745;
+            background: linear-gradient(45deg, #f0fff4, #e6fffa);
+        }
+
+        .structure-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .category-list {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .category-item {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+
+        .category-unchanged {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+
+        .category-removed {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .category-decomposed {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+        }
+
+        .category-new {
+            background: #e8f5e8;
+            border-left: 4px solid #4caf50;
+            font-weight: bold;
+        }
+
+        .stats-comparison {
+            background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .change-indicator {
+            font-size: 1.2em;
+            margin-left: 10px;
+        }
+
+        .change-positive {
+            color: #4caf50;
+        }
+
+        .change-neutral {
+            color: #ffc107;
+        }
+
+        .insights-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 30px;
+        }
+
+        .visualization-preview {
+            height: 200px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 15px 0;
+            transition: all 0.3s ease;
+        }
+
+        .visualization-preview:hover {
+            background: #e0e0e0;
+            transform: scale(1.02);
+        }
+
+        .legend-box {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(0,0,0,0.3);">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-arrow-left-right"></i> Structure Comparison
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Original Matrix</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/revised">Revised Matrix</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/radial">Original Radial</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/revised-radial">Revised Radial</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/comparison">Compare Views</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="comparison-container">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <h1 class="display-4">
+                    <i class="bi bi-diagram-2"></i>
+                    GORC Structure Comparison
+                </h1>
+                <p class="lead">
+                    Comparing the original and revised GORC category structures based on September 2025 working group discussions
+                </p>
+            </div>
+
+            <!-- Stats Comparison -->
+            <div class="stats-comparison">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="stat-number">11</div>
+                        <div>MaLDReTH Stages</div>
+                        <div class="change-indicator change-neutral">
+                            <i class="bi bi-dash-circle"></i> Unchanged
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-number">9 → 14</div>
+                        <div>GORC Categories</div>
+                        <div class="change-indicator change-positive">
+                            <i class="bi bi-arrow-up-circle"></i> +5 Categories
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-number">1 → 4</div>
+                        <div>Repository Types</div>
+                        <div class="change-indicator change-positive">
+                            <i class="bi bi-arrow-up-circle"></i> Decomposed
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-number">0 → 3</div>
+                        <div>New Service Types</div>
+                        <div class="change-indicator change-positive">
+                            <i class="bi bi-plus-circle"></i> Added
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side-by-Side Structure Comparison -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="structure-card original">
+                        <h3 class="text-center mb-4">
+                            <i class="bi bi-arrow-left text-primary"></i>
+                            Original Structure
+                        </h3>
+
+                        <!-- Visualization Preview -->
+                        <div class="visualization-preview">
+                            <a href="/radial" class="text-decoration-none text-dark">
+                                <i class="bi bi-circle" style="font-size: 3em;"></i>
+                                <div class="mt-2">
+                                    <strong>View Original Radial</strong><br>
+                                    <small>9 GORC Categories</small>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="category-list">
+                            <h5>GORC Categories (9)</h5>
+                            <div class="category-item category-unchanged">
+                                <i class="bi bi-check-circle text-primary"></i>
+                                Discovery Services
+                            </div>
+                            <div class="category-item category-decomposed">
+                                <i class="bi bi-arrow-down-right text-warning"></i>
+                                Research Object Repositories
+                                <small class="d-block text-muted">→ Decomposed into 4 types</small>
+                            </div>
+                            <div class="category-item category-removed">
+                                <i class="bi bi-x-circle text-danger"></i>
+                                Direct Research Tasks
+                                <small class="d-block text-muted">Integrated into MaLDReTH</small>
+                            </div>
+                            <div class="category-item category-unchanged">
+                                <i class="bi bi-check-circle text-primary"></i>
+                                Workflows and Middleware
+                            </div>
+                            <div class="category-item category-unchanged">
+                                <i class="bi bi-check-circle text-primary"></i>
+                                Vocabulary Services
+                            </div>
+                            <div class="category-item category-unchanged">
+                                <i class="bi bi-check-circle text-primary"></i>
+                                Commons Catalogues
+                            </div>
+                            <div class="category-item category-unchanged">
+                                <i class="bi bi-check-circle text-primary"></i>
+                                PID Services
+                            </div>
+                            <div class="category-item category-unchanged">
+                                <i class="bi bi-check-circle text-primary"></i>
+                                AAI Services
+                            </div>
+                            <div class="category-item category-unchanged">
+                                <i class="bi bi-check-circle text-primary"></i>
+                                Helpdesk Services
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <a href="/radial" class="btn btn-primary">
+                                <i class="bi bi-eye"></i> View Original Radial
+                            </a>
+                            <a href="/" class="btn btn-outline-primary">
+                                <i class="bi bi-table"></i> Original Matrix
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="structure-card revised">
+                        <h3 class="text-center mb-4">
+                            <i class="bi bi-arrow-right text-success"></i>
+                            Revised Structure
+                        </h3>
+
+                        <!-- Visualization Preview -->
+                        <div class="visualization-preview">
+                            <a href="/revised-radial" class="text-decoration-none text-dark">
+                                <i class="bi bi-diagram-3" style="font-size: 3em;"></i>
+                                <div class="mt-2">
+                                    <strong>View Revised Radial</strong><br>
+                                    <small>14 GORC Categories</small>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="category-list">
+                            <h5>Revised GORC Categories (14)</h5>
+                            <div class="category-item category-unchanged">
+                                <i class="bi bi-check-circle text-primary"></i>
+                                Discovery Services
+                            </div>
+                            <div class="category-item category-new">
+                                <i class="bi bi-plus-circle text-success"></i>
+                                Data Repositories
+                            </div>
+                            <div class="category-item category-new">
+                                <i class="bi bi-plus-circle text-success"></i>
+                                Publication Repositories
+                            </div>
+                            <div class="category-item category-new">
+                                <i class="bi bi-plus-circle text-success"></i>
+                                Documentation Repositories
+                            </div>
+                            <div class="category-item category-new">
+                                <i class="bi bi-plus-circle text-success"></i>
+                                Software Repositories
+                            </div>
+                            <div class="category-item category-new">
+                                <i class="bi bi-plus-circle text-success"></i>
+                                Data Deposit Services
+                            </div>
+                            <div class="category-item category-new">
+                                <i class="bi bi-plus-circle text-success"></i>
+                                Quality Assurance Services
+                            </div>
+                            <div class="category-item category-new">
+                                <i class="bi bi-plus-circle text-success"></i>
+                                API Connection Services
+                            </div>
+                            <div class="category-item category-unchanged">
+                                <i class="bi bi-check-circle text-primary"></i>
+                                Workflows and Middleware
+                            </div>
+                            <div class="category-item category-unchanged">
+                                <i class="bi bi-check-circle text-primary"></i>
+                                Vocabulary Services
+                            </div>
+                            <div class="category-item category-unchanged">
+                                <i class="bi bi-check-circle text-primary"></i>
+                                Commons Catalogues
+                            </div>
+                            <div class="category-item category-unchanged">
+                                <i class="bi bi-check-circle text-primary"></i>
+                                PID Services
+                            </div>
+                            <div class="category-item category-unchanged">
+                                <i class="bi bi-check-circle text-primary"></i>
+                                AAI Services
+                            </div>
+                            <div class="category-item category-unchanged">
+                                <i class="bi bi-check-circle text-primary"></i>
+                                Helpdesk Services
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <a href="/revised-radial" class="btn btn-success">
+                                <i class="bi bi-eye"></i> View Revised Radial
+                            </a>
+                            <a href="/revised" class="btn btn-outline-success">
+                                <i class="bi bi-table"></i> Revised Matrix
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend-box">
+                <h6>Legend:</h6>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #e3f2fd; border-left: 4px solid #2196f3;"></div>
+                            <span>Unchanged</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #e8f5e8; border-left: 4px solid #4caf50;"></div>
+                            <span>New Category</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #fff3e0; border-left: 4px solid #ff9800;"></div>
+                            <span>Decomposed</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ffebee; border-left: 4px solid #f44336;"></div>
+                            <span>Removed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Insights -->
+            <div class="insights-section">
+                <h3><i class="bi bi-lightbulb"></i> Key Insights from the Revision</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Enhanced Granularity</h5>
+                        <ul>
+                            <li><strong>Repository Decomposition:</strong> The monolithic "Research Object Repositories" has been split into 4 specific types, allowing for more precise stage mappings.</li>
+                            <li><strong>New Service Categories:</strong> Addition of Data Deposit, Quality Assurance, and API Connection services fills previously unaddressed gaps.</li>
+                            <li><strong>Better Alignment:</strong> GORC arcs now properly align with the MaLDReTH stages they cover.</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Working Group Outcomes</h5>
+                        <ul>
+                            <li><strong>Direct Research Tasks Removal:</strong> Integrated directly into MaLDReTH stages to reduce redundancy.</li>
+                            <li><strong>Service Type Clarity:</strong> Clear distinction between stage-specific and enabling services.</li>
+                            <li><strong>Implementation Ready:</strong> Structure is now ready for the next phase of working group validation.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h5>Impact on Visualization</h5>
+                        <p>
+                            The revised structure provides more detailed insights into how different types of infrastructure
+                            services support the research data lifecycle. The decomposed repository categories allow for
+                            better understanding of stage-specific requirements, while the new service categories address
+                            previously unmodeled aspects of the research infrastructure ecosystem.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="text-center mt-4">
+                <div class="btn-group" role="group" aria-label="Quick actions">
+                    <a href="/radial" class="btn btn-outline-primary">
+                        <i class="bi bi-circle"></i> Original Radial
+                    </a>
+                    <a href="/revised-radial" class="btn btn-outline-success">
+                        <i class="bi bi-diagram-3"></i> Revised Radial
+                    </a>
+                    <a href="/" class="btn btn-outline-info">
+                        <i class="bi bi-table"></i> Original Matrix
+                    </a>
+                    <a href="/revised" class="btn btn-outline-warning">
+                        <i class="bi bi-table"></i> Revised Matrix
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center text-white mt-5 pb-3">
+        <p class="mb-0">© 2024 Research Data Lifecycle Team | CC-BY 4.0 | Comparison Tool Sept 2025</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

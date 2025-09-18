@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GORC-MaLDReTH Correlation Table Export</title>
+    <title>Revised GORC-MaLDReTH Correlation Matrix (Sept 2025)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
@@ -41,18 +41,24 @@
             background-color: #d9e2f3;
             font-weight: bold;
         }
-        .export-section {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 30px;
+        .comparison-banner {
+            background: linear-gradient(45deg, #ff6b6b, #ffa726);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .changes-highlight {
+            background: linear-gradient(45deg, #4CAF50, #66BB6A);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
         }
         .table-responsive {
             max-height: 600px;
             overflow: auto;
-        }
-        .navbar-brand {
-            font-weight: bold;
         }
         .info-card {
             border-left: 4px solid #366092;
@@ -78,7 +84,6 @@
             background-color: #f8f9fa;
             color: #6c757d;
         }
-        /* Custom tooltip styling */
         .tooltip-custom {
             position: absolute;
             background-color: #333;
@@ -114,40 +119,70 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">GORC-MaLDReTH Correlation Tool</a>
+            <a class="navbar-brand" href="#">Revised GORC-MaLDReTH Correlation Tool</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-    <ul class="navbar-nav ms-auto">
-        <li class="nav-item">
-            <a class="nav-link active" href="/">Original Matrix</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/revised">Revised Matrix</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/radial">Original Radial</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/revised-radial">Revised Radial</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/comparison">Compare Views</a>
-        </li>
-    </ul>
-</div>
-
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Original Matrix</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/revised">Revised Matrix</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/radial">Original Radial</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/revised-radial">Revised Radial</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/comparison">Compare Views</a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
     <!-- Main Content -->
     <div class="container-fluid mt-4">
+        <!-- Comparison Banner -->
+        <div class="comparison-banner">
+            <h4><i class="bi bi-exclamation-triangle"></i> Revised Structure (September 2025)</h4>
+            <p class="mb-0">
+                This matrix shows the updated GORC structure from the working group discussion -
+                decomposed Research Object Repositories and new service categories.
+            </p>
+        </div>
+
         <!-- Header Section -->
         <div class="row mb-4">
             <div class="col-12">
-                <h1 class="display-5">GORC-MaLDReTH Correlation Mapping</h1>
-                <p class="lead">Explore the relationships between Global Open Research Commons (GORC) categories and MaLDReTH Research Data Lifecycle stages.</p>
+                <h1 class="display-5">Revised GORC-MaLDReTH Correlation Mapping</h1>
+                <p class="lead">Updated relationships with enhanced granularity and decomposed repository categories.</p>
+            </div>
+        </div>
+
+        <!-- Changes Summary -->
+        <div class="changes-highlight">
+            <h5><i class="bi bi-star"></i> Key Changes from Original Structure</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Decomposed:</strong>
+                    <ul class="mb-0">
+                        <li>Research Object Repositories → 4 specific types</li>
+                        <li>Better stage-specific alignments</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <strong>Added:</strong>
+                    <ul class="mb-0">
+                        <li>Data Deposit Services</li>
+                        <li>Quality Assurance Services</li>
+                        <li>API Connection Services</li>
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -157,15 +192,15 @@
                 <div class="card info-card">
                     <div class="card-body">
                         <h5 class="card-title">11 MaLDReTH Stages</h5>
-                        <p class="card-text">Comprehensive lifecycle from conceptualization to transformation</p>
+                        <p class="card-text">Unchanged comprehensive lifecycle from conceptualization to transformation</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card info-card">
                     <div class="card-body">
-                        <h5 class="card-title">9 GORC Categories</h5>
-                        <p class="card-text">Infrastructure services supporting research data management</p>
+                        <h5 class="card-title">14 Revised GORC Categories</h5>
+                        <p class="card-text">Enhanced granularity with decomposed repositories and new service types</p>
                     </div>
                 </div>
             </div>
@@ -173,7 +208,7 @@
                 <div class="card info-card">
                     <div class="card-body">
                         <h5 class="card-title">Interactive Matrix</h5>
-                        <p class="card-text">Hover over cells to see detailed descriptions</p>
+                        <p class="card-text">Hover over cells to see detailed descriptions of correlations</p>
                     </div>
                 </div>
             </div>
@@ -196,12 +231,12 @@
 
         <!-- Correlation Matrix Section -->
         <section id="matrix" class="mb-5">
-            <h2>Correlation Matrix</h2>
+            <h2>Revised Correlation Matrix</h2>
             <div class="table-responsive">
-                <table id="correlationTable" class="table table-bordered">
+                <table id="revisedCorrelationTable" class="table table-bordered">
                     <thead>
                         <tr>
-                            <th class="category-header">GORC Categories</th>
+                            <th class="category-header">Revised GORC Categories</th>
                             <!-- Stage headers will be populated by JavaScript -->
                         </tr>
                     </thead>
@@ -212,25 +247,23 @@
             </div>
         </section>
 
-        <!-- Export Options Section -->
-        <section id="export" class="export-section">
-            <h2>Export Options</h2>
+        <!-- Comparison Section -->
+        <section class="mb-5">
+            <h2>Comparison with Original Structure</h2>
             <div class="row">
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">
-                                <i class="bi bi-file-earmark-excel text-success"></i> Excel Export
+                                <i class="bi bi-arrow-left text-primary"></i> Original Structure
                             </h5>
-                            <p class="card-text">Download complete workbook with all sheets including:</p>
-                            <ul>
-                                <li>Correlation matrix with cell comments</li>
-                                <li>Analysis summary</li>
-                                <li>Key findings</li>
+                            <ul class="card-text">
+                                <li>9 GORC Categories</li>
+                                <li>Monolithic "Research Object Repositories"</li>
+                                <li>Generic "Direct Research Tasks"</li>
+                                <li>Less granular service mappings</li>
                             </ul>
-                            <a href="/export/excel" class="btn btn-success">
-                                <i class="bi bi-download"></i> Download Excel
-                            </a>
+                            <a href="/" class="btn btn-outline-primary">View Original Matrix</a>
                         </div>
                     </div>
                 </div>
@@ -238,77 +271,21 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">
-                                <i class="bi bi-file-earmark-text text-primary"></i> CSV Export
+                                <i class="bi bi-arrow-right text-success"></i> Revised Structure
                             </h5>
-                            <p class="card-text">Download individual sheets as CSV files for easy import into other applications.</p>
-                            <div class="btn-group" role="group">
-                                <a href="/export/csv/matrix" class="btn btn-primary">
-                                    <i class="bi bi-table"></i> Matrix CSV
-                                </a>
-                                <a href="/export/csv/summary" class="btn btn-primary">
-                                    <i class="bi bi-list-ul"></i> Summary CSV
-                                </a>
-                            </div>
+                            <ul class="card-text">
+                                <li>14 GORC Categories</li>
+                                <li>4 specific repository types</li>
+                                <li>3 new service categories</li>
+                                <li>Enhanced stage-specific alignments</li>
+                            </ul>
+                            <a href="/comparison" class="btn btn-outline-success">Detailed Comparison</a>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="row mt-3">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">
-                                <i class="bi bi-google text-warning"></i> Google Sheets
-                            </h5>
-                            <p class="card-text">To import into Google Sheets:</p>
-                            <ol>
-                                <li>Download the Excel file using the button above</li>
-                                <li>Open Google Sheets and create a new spreadsheet</li>
-                                <li>Go to File → Import → Upload</li>
-                                <li>Select the downloaded Excel file</li>
-                                <li>Choose "Replace spreadsheet" and click "Import data"</li>
-                            </ol>
-                            <div class="alert alert-info mt-3">
-                                <i class="bi bi-lightbulb"></i> <strong>Tip:</strong> The Excel file includes cell comments with detailed descriptions that will be preserved in Google Sheets.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- About Section -->
-        <section id="about" class="mt-5 mb-5">
-            <h2>About This Tool</h2>
-            <div class="card">
-                <div class="card-body">
-                    <p>This tool provides an interactive view and export functionality for the GORC-MaLDReTH correlation mapping table. The mapping demonstrates how Global Open Research Commons (GORC) infrastructure services complement and enable the MaLDReTH Research Data Lifecycle stages.</p>
-                    <h6>Key Features:</h6>
-                    <ul>
-                        <li>Clean correlation matrix with hover tooltips for descriptions</li>
-                        <li>Excel export with formatted sheets and cell comments</li>
-                        <li>CSV export for data analysis</li>
-                        <li>Google Sheets compatible format</li>
-                        <li>Analysis summary and key findings</li>
-                    </ul>
-                    <p class="mt-3"><small class="text-muted">Version 1.1.0 | Last updated: <span id="current-date"></span></small></p>
                 </div>
             </div>
         </section>
     </div>
-
-    <!-- Footer -->
-    <footer class="bg-light text-center text-lg-start mt-5">
-        <div class="container p-4">
-            <div class="row">
-                <div class="col-12">
-                    <p class="text-center text-muted">
-                        © 2024 Research Data Lifecycle Team. Licensed under CC-BY 4.0.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </footer>
 
     <!-- Custom Tooltip -->
     <div id="customTooltip" class="tooltip-custom"></div>
@@ -320,22 +297,22 @@
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Load correlation data
+            // Load revised correlation data
             $.ajax({
-                url: '/api/correlation-data',
+                url: '/api/revised-correlation-data',
                 method: 'GET',
                 success: function(data) {
                     populateTable(data);
                 },
                 error: function(error) {
-                    console.error('Error loading data:', error);
-                    alert('Failed to load correlation data. Please refresh the page.');
+                    console.error('Error loading revised data:', error);
+                    alert('Failed to load revised correlation data. Please refresh the page.');
                 }
             });
 
             function populateTable(data) {
-                const thead = $('#correlationTable thead tr');
-                const tbody = $('#correlationTable tbody');
+                const thead = $('#revisedCorrelationTable thead tr');
+                const tbody = $('#revisedCorrelationTable tbody');
 
                 // Add stage headers
                 data.stages.forEach(stage => {
@@ -345,14 +322,14 @@
                 // Add data rows
                 data.categories.forEach(category => {
                     let row = `<tr><td class="category-header">${category}</td>`;
-                    
+
                     data.stages.forEach(stage => {
                         const correlation = data.correlations[category] ? data.correlations[category][stage] : null;
                         const marker = correlation ? correlation.marker || '' : '';
                         const description = correlation ? correlation.description || '' : '';
-                        
+
                         let cellClass = 'correlation-cell';
-                        
+
                         if (marker === 'XX') {
                             cellClass += ' correlation-xx';
                         } else if (marker === 'X') {
@@ -360,23 +337,23 @@
                         } else {
                             cellClass += ' correlation-empty';
                         }
-                        
+
                         // Add data attributes for tooltip
-                        row += `<td class="${cellClass}" 
-                                    data-marker="${marker}" 
+                        row += `<td class="${cellClass}"
+                                    data-marker="${marker}"
                                     data-description="${description}"
                                     data-category="${category}"
                                     data-stage="${stage}">
                                     ${marker || '–'}
                                 </td>`;
                     });
-                    
+
                     row += '</tr>';
                     tbody.append(row);
                 });
 
                 // Initialize DataTable
-                $('#correlationTable').DataTable({
+                $('#revisedCorrelationTable').DataTable({
                     paging: false,
                     searching: false,
                     info: false,
@@ -392,38 +369,38 @@
 
             function setupTooltips() {
                 const tooltip = $('#customTooltip');
-                
+
                 $('.correlation-cell').on('mouseenter', function(e) {
                     const description = $(this).data('description');
                     const marker = $(this).data('marker');
                     const category = $(this).data('category');
                     const stage = $(this).data('stage');
-                    
+
                     if (description && marker) {
                         let content = `<strong>${category} → ${stage}</strong><br>`;
                         content += `<span style="color: #ffc107;">Correlation: ${marker}</span><br>`;
                         content += description;
-                        
+
                         tooltip.html(content);
-                        
+
                         const rect = this.getBoundingClientRect();
                         const tooltipWidth = 300;
                         let left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
                         let top = rect.top - 10;
-                        
+
                         // Adjust if tooltip goes off screen
                         if (left < 10) left = 10;
                         if (left + tooltipWidth > window.innerWidth - 10) {
                             left = window.innerWidth - tooltipWidth - 10;
                         }
-                        
+
                         tooltip.css({
                             left: left + 'px',
                             top: (top - tooltip.outerHeight()) + 'px'
                         }).addClass('show');
                     }
                 });
-                
+
                 $('.correlation-cell').on('mouseleave', function() {
                     tooltip.removeClass('show');
                 });
@@ -435,7 +412,6 @@
                 month: 'long',
                 day: 'numeric'
             });
-            $('#current-date').text(currentDate);
         });
     </script>
 </body>

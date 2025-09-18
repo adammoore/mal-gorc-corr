@@ -56,6 +56,24 @@ GORC_CATEGORIES = [
     'Helpdesk Services'
 ]
 
+# Revised GORC categories based on working group discussion (Sept 2025)
+REVISED_GORC_CATEGORIES = [
+    'Discovery Services',
+    'Data Repositories',
+    'Publication Repositories',
+    'Documentation Repositories',
+    'Software Repositories',
+    'Data Deposit Services',
+    'Quality Assurance Services',
+    'API Connection Services',
+    'Services and Tools that Enable Workflows and Middleware',
+    'Vocabulary and Semantic Object Services',
+    'Commons Catalogues of All Services and Tools',
+    'Persistent Identifier Services',
+    'Security and Identification Services (AAI)',
+    'Helpdesk Services'
+]
+
 # Correlation data structure with separated markers and descriptions
 CORRELATION_DATA = {
     'Research Object Repositories': {
@@ -173,6 +191,193 @@ CORRELATION_DATA = {
         'PRESERVE': {'marker': 'X', 'description': 'Preservation planning support'},
         'SHARE': {'marker': 'X', 'description': 'Sharing configuration help'},
         'ACCESS': {'marker': 'X', 'description': 'Access problem resolution'},
+        'TRANSFORM': {'marker': 'X', 'description': 'Integration challenge support'}
+    }
+}
+
+# Revised correlation data based on working group discussion (Sept 2025)
+# Decomposed Research Object Repositories into specific components
+REVISED_CORRELATION_DATA = {
+    'Discovery Services': {
+        'CONCEPTUALIZE': {'marker': 'X', 'description': 'Literature and dataset discovery for hypothesis formation'},
+        'PLAN': {'marker': 'X', 'description': 'Discovery of existing studies and methodologies'},
+        'COLLECT': {'marker': '', 'description': ''},
+        'PROCESS': {'marker': '', 'description': ''},
+        'ANALYSE': {'marker': 'X', 'description': 'Finding comparative datasets and analytical resources'},
+        'STORE': {'marker': '', 'description': ''},
+        'PUBLISH': {'marker': '', 'description': ''},
+        'PRESERVE': {'marker': '', 'description': ''},
+        'SHARE': {'marker': 'X', 'description': 'Discovery interfaces for shared resources'},
+        'ACCESS': {'marker': 'X', 'description': 'Search and discovery of accessible datasets'},
+        'TRANSFORM': {'marker': '', 'description': ''}
+    },
+    'Data Repositories': {
+        'CONCEPTUALIZE': {'marker': '', 'description': ''},
+        'PLAN': {'marker': '', 'description': ''},
+        'COLLECT': {'marker': 'XX', 'description': 'Primary data storage infrastructure'},
+        'PROCESS': {'marker': '', 'description': ''},
+        'ANALYSE': {'marker': '', 'description': ''},
+        'STORE': {'marker': 'XX', 'description': 'Core data storage with versioning'},
+        'PUBLISH': {'marker': '', 'description': ''},
+        'PRESERVE': {'marker': 'X', 'description': 'Long-term data preservation'},
+        'SHARE': {'marker': 'X', 'description': 'Data sharing infrastructure'},
+        'ACCESS': {'marker': 'X', 'description': 'Data access and download mechanisms'},
+        'TRANSFORM': {'marker': '', 'description': ''}
+    },
+    'Publication Repositories': {
+        'CONCEPTUALIZE': {'marker': '', 'description': ''},
+        'PLAN': {'marker': '', 'description': ''},
+        'COLLECT': {'marker': '', 'description': ''},
+        'PROCESS': {'marker': '', 'description': ''},
+        'ANALYSE': {'marker': '', 'description': ''},
+        'STORE': {'marker': '', 'description': ''},
+        'PUBLISH': {'marker': 'XX', 'description': 'Academic publication platforms with DOI assignment'},
+        'PRESERVE': {'marker': 'X', 'description': 'Long-term publication preservation'},
+        'SHARE': {'marker': 'X', 'description': 'Publication sharing and dissemination'},
+        'ACCESS': {'marker': 'X', 'description': 'Open access to published works'},
+        'TRANSFORM': {'marker': '', 'description': ''}
+    },
+    'Documentation Repositories': {
+        'CONCEPTUALIZE': {'marker': 'X', 'description': 'Project documentation and protocols'},
+        'PLAN': {'marker': 'X', 'description': 'Planning documents and methodological notes'},
+        'COLLECT': {'marker': 'X', 'description': 'Data collection protocols and metadata'},
+        'PROCESS': {'marker': 'X', 'description': 'Processing documentation and workflows'},
+        'ANALYSE': {'marker': 'X', 'description': 'Analysis documentation and code'},
+        'STORE': {'marker': 'X', 'description': 'Storage documentation and schemas'},
+        'PUBLISH': {'marker': 'X', 'description': 'Publication support materials'},
+        'PRESERVE': {'marker': 'X', 'description': 'Preservation documentation'},
+        'SHARE': {'marker': 'X', 'description': 'Sharing protocols and guides'},
+        'ACCESS': {'marker': 'X', 'description': 'Access documentation and user guides'},
+        'TRANSFORM': {'marker': 'X', 'description': 'Transformation and integration guides'}
+    },
+    'Software Repositories': {
+        'CONCEPTUALIZE': {'marker': '', 'description': ''},
+        'PLAN': {'marker': 'X', 'description': 'Research software planning and design tools'},
+        'COLLECT': {'marker': 'X', 'description': 'Data collection software and scripts'},
+        'PROCESS': {'marker': 'XX', 'description': 'Data processing and cleaning software'},
+        'ANALYSE': {'marker': 'XX', 'description': 'Statistical and analytical software packages'},
+        'STORE': {'marker': '', 'description': ''},
+        'PUBLISH': {'marker': 'X', 'description': 'Publication generation software'},
+        'PRESERVE': {'marker': 'X', 'description': 'Software preservation and containerization'},
+        'SHARE': {'marker': 'X', 'description': 'Code sharing and collaboration platforms'},
+        'ACCESS': {'marker': 'X', 'description': 'Software access and download'},
+        'TRANSFORM': {'marker': 'XX', 'description': 'Data transformation and migration tools'}
+    },
+    'Data Deposit Services': {
+        'CONCEPTUALIZE': {'marker': '', 'description': ''},
+        'PLAN': {'marker': '', 'description': ''},
+        'COLLECT': {'marker': 'X', 'description': 'Initial data deposit mechanisms'},
+        'PROCESS': {'marker': '', 'description': ''},
+        'ANALYSE': {'marker': '', 'description': ''},
+        'STORE': {'marker': 'X', 'description': 'Secure data deposit workflows'},
+        'PUBLISH': {'marker': '', 'description': ''},
+        'PRESERVE': {'marker': 'X', 'description': 'Preservation-ready deposit services'},
+        'SHARE': {'marker': 'X', 'description': 'Shared deposit and submission'},
+        'ACCESS': {'marker': '', 'description': ''},
+        'TRANSFORM': {'marker': '', 'description': ''}
+    },
+    'Quality Assurance Services': {
+        'CONCEPTUALIZE': {'marker': '', 'description': ''},
+        'PLAN': {'marker': 'X', 'description': 'Quality planning and standards definition'},
+        'COLLECT': {'marker': 'X', 'description': 'Data quality validation during collection'},
+        'PROCESS': {'marker': 'XX', 'description': 'Data cleaning and quality assurance'},
+        'ANALYSE': {'marker': 'X', 'description': 'Analytical quality controls'},
+        'STORE': {'marker': 'X', 'description': 'Storage integrity and quality checks'},
+        'PUBLISH': {'marker': 'X', 'description': 'Publication quality review'},
+        'PRESERVE': {'marker': 'XX', 'description': 'Long-term integrity monitoring'},
+        'SHARE': {'marker': 'X', 'description': 'Quality verification for sharing'},
+        'ACCESS': {'marker': 'X', 'description': 'Access quality and reliability'},
+        'TRANSFORM': {'marker': 'X', 'description': 'Transformation quality assurance'}
+    },
+    'API Connection Services': {
+        'CONCEPTUALIZE': {'marker': '', 'description': ''},
+        'PLAN': {'marker': '', 'description': ''},
+        'COLLECT': {'marker': 'X', 'description': 'API-based data collection'},
+        'PROCESS': {'marker': 'X', 'description': 'Processing pipeline APIs'},
+        'ANALYSE': {'marker': 'X', 'description': 'Analytical service APIs'},
+        'STORE': {'marker': 'X', 'description': 'Storage API integration'},
+        'PUBLISH': {'marker': 'X', 'description': 'Publication API services'},
+        'PRESERVE': {'marker': 'X', 'description': 'Preservation API connections'},
+        'SHARE': {'marker': 'X', 'description': 'Sharing API endpoints'},
+        'ACCESS': {'marker': 'XX', 'description': 'Primary API access mechanisms'},
+        'TRANSFORM': {'marker': 'X', 'description': 'Data transformation APIs'}
+    },
+    'Services and Tools that Enable Workflows and Middleware': {
+        'CONCEPTUALIZE': {'marker': '', 'description': ''},
+        'PLAN': {'marker': 'X', 'description': 'Workflow planning and design tools'},
+        'COLLECT': {'marker': 'X', 'description': 'Data collection orchestration'},
+        'PROCESS': {'marker': 'XX', 'description': 'Automated processing workflows'},
+        'ANALYSE': {'marker': 'XX', 'description': 'Analytical workflow management'},
+        'STORE': {'marker': 'X', 'description': 'Storage workflow automation'},
+        'PUBLISH': {'marker': 'X', 'description': 'Publication workflow tools'},
+        'PRESERVE': {'marker': 'X', 'description': 'Preservation workflow services'},
+        'SHARE': {'marker': 'X', 'description': 'Sharing workflow management'},
+        'ACCESS': {'marker': 'X', 'description': 'Access workflow orchestration'},
+        'TRANSFORM': {'marker': 'XX', 'description': 'Data transformation pipelines'}
+    },
+    'Vocabulary and Semantic Object Services': {
+        'CONCEPTUALIZE': {'marker': 'X', 'description': 'Ontology and vocabulary discovery'},
+        'PLAN': {'marker': 'X', 'description': 'Semantic planning and schema design'},
+        'COLLECT': {'marker': 'X', 'description': 'Metadata and semantic annotation'},
+        'PROCESS': {'marker': 'X', 'description': 'Semantic data processing'},
+        'ANALYSE': {'marker': 'X', 'description': 'Semantic analysis and reasoning'},
+        'STORE': {'marker': 'X', 'description': 'Semantic storage and indexing'},
+        'PUBLISH': {'marker': 'X', 'description': 'Semantic publication metadata'},
+        'PRESERVE': {'marker': 'X', 'description': 'Semantic preservation standards'},
+        'SHARE': {'marker': 'X', 'description': 'Semantic interoperability'},
+        'ACCESS': {'marker': 'X', 'description': 'Semantic search and discovery'},
+        'TRANSFORM': {'marker': 'X', 'description': 'Semantic transformation services'}
+    },
+    'Commons Catalogues of All Services and Tools': {
+        'CONCEPTUALIZE': {'marker': '', 'description': ''},
+        'PLAN': {'marker': '', 'description': ''},
+        'COLLECT': {'marker': '', 'description': ''},
+        'PROCESS': {'marker': '', 'description': ''},
+        'ANALYSE': {'marker': '', 'description': ''},
+        'STORE': {'marker': '', 'description': ''},
+        'PUBLISH': {'marker': '', 'description': ''},
+        'PRESERVE': {'marker': '', 'description': ''},
+        'SHARE': {'marker': '', 'description': ''},
+        'ACCESS': {'marker': 'X', 'description': 'Service discovery and cataloguing'},
+        'TRANSFORM': {'marker': '', 'description': ''}
+    },
+    'Persistent Identifier Services': {
+        'CONCEPTUALIZE': {'marker': '', 'description': ''},
+        'PLAN': {'marker': '', 'description': ''},
+        'COLLECT': {'marker': '', 'description': ''},
+        'PROCESS': {'marker': '', 'description': ''},
+        'ANALYSE': {'marker': '', 'description': ''},
+        'STORE': {'marker': 'X', 'description': 'PID assignment for stored data'},
+        'PUBLISH': {'marker': 'XX', 'description': 'DOI and identifier management'},
+        'PRESERVE': {'marker': 'XX', 'description': 'Persistent citation and referencing'},
+        'SHARE': {'marker': 'X', 'description': 'Shareable persistent identifiers'},
+        'ACCESS': {'marker': 'X', 'description': 'PID-based access resolution'},
+        'TRANSFORM': {'marker': '', 'description': ''}
+    },
+    'Security and Identification Services (AAI)': {
+        'CONCEPTUALIZE': {'marker': 'X', 'description': 'Identity management for collaborative planning'},
+        'PLAN': {'marker': 'X', 'description': 'Secure planning environment access'},
+        'COLLECT': {'marker': 'X', 'description': 'Authenticated data collection'},
+        'PROCESS': {'marker': 'X', 'description': 'Secure processing environments'},
+        'ANALYSE': {'marker': 'X', 'description': 'Authenticated analytical access'},
+        'STORE': {'marker': 'X', 'description': 'Secure storage authentication'},
+        'PUBLISH': {'marker': 'X', 'description': 'Publisher authentication and authorization'},
+        'PRESERVE': {'marker': 'X', 'description': 'Preservation access control'},
+        'SHARE': {'marker': 'X', 'description': 'Controlled sharing permissions'},
+        'ACCESS': {'marker': 'X', 'description': 'Authenticated data access'},
+        'TRANSFORM': {'marker': 'X', 'description': 'Secure transformation services'}
+    },
+    'Helpdesk Services': {
+        'CONCEPTUALIZE': {'marker': 'X', 'description': 'Research planning guidance'},
+        'PLAN': {'marker': 'X', 'description': 'Methodology and planning support'},
+        'COLLECT': {'marker': 'X', 'description': 'Data collection technical support'},
+        'PROCESS': {'marker': 'X', 'description': 'Processing pipeline assistance'},
+        'ANALYSE': {'marker': 'X', 'description': 'Analytical methodology support'},
+        'STORE': {'marker': 'X', 'description': 'Storage and backup guidance'},
+        'PUBLISH': {'marker': 'X', 'description': 'Publication process support'},
+        'PRESERVE': {'marker': 'X', 'description': 'Digital preservation advice'},
+        'SHARE': {'marker': 'X', 'description': 'Data sharing best practices'},
+        'ACCESS': {'marker': 'X', 'description': 'Access troubleshooting and support'},
         'TRANSFORM': {'marker': 'X', 'description': 'Integration challenge support'}
     }
 }
@@ -652,6 +857,96 @@ def export_csv(sheet_type: str):
         logger.error(f"Error exporting to CSV: {str(e)}")
         return jsonify({'error': 'Failed to generate CSV file'}), 500
 
+
+# NEW ROUTES FOR REVISED STRUCTURE (Sept 2025)
+
+@app.route('/revised')
+def revised_matrix():
+    """
+    Render the revised correlation matrix page based on working group discussion.
+
+    Returns:
+        str: Rendered HTML template for revised matrix view
+    """
+    return render_template('revised_matrix.html')
+
+@app.route('/revised-radial')
+def revised_radial_visualization():
+    """
+    Render the revised radial visualization page.
+
+    Returns:
+        str: Rendered HTML template for revised radial visualization
+    """
+    return render_template('revised_radial_visualization.html')
+
+@app.route('/api/revised-correlation-data')
+def get_revised_correlation_data():
+    """
+    API endpoint to retrieve revised correlation data based on working group discussion.
+
+    Returns:
+        Response: JSON response containing revised correlation data
+    """
+    try:
+        response_data = {
+            'stages': MALDRETH_STAGES,
+            'categories': REVISED_GORC_CATEGORIES,
+            'correlations': REVISED_CORRELATION_DATA
+        }
+        return jsonify(response_data), 200
+    except Exception as e:
+        logger.error(f"Error retrieving revised correlation data: {str(e)}")
+        return jsonify({'error': 'Failed to retrieve revised correlation data'}), 500
+
+@app.route('/api/revised-radial-visualization-data')
+def get_revised_radial_visualization_data():
+    """
+    API endpoint to retrieve data formatted for revised radial visualization.
+
+    Returns:
+        Response: JSON response containing revised visualization data
+    """
+    try:
+        # Prepare revised GORC categories with short names
+        revised_gorc_categories = [
+            {'name': 'Discovery Services', 'shortName': 'Discovery'},
+            {'name': 'Data Repositories', 'shortName': 'Data Repos'},
+            {'name': 'Publication Repositories', 'shortName': 'Pub Repos'},
+            {'name': 'Documentation Repositories', 'shortName': 'Doc Repos'},
+            {'name': 'Software Repositories', 'shortName': 'Software'},
+            {'name': 'Data Deposit Services', 'shortName': 'Deposit'},
+            {'name': 'Quality Assurance Services', 'shortName': 'QA'},
+            {'name': 'API Connection Services', 'shortName': 'APIs'},
+            {'name': 'Services and Tools that Enable Workflows and Middleware', 'shortName': 'Workflows'},
+            {'name': 'Vocabulary and Semantic Object Services', 'shortName': 'Vocabulary'},
+            {'name': 'Commons Catalogues of All Services and Tools', 'shortName': 'Catalogues'},
+            {'name': 'Persistent Identifier Services', 'shortName': 'PIDs'},
+            {'name': 'Security and Identification Services (AAI)', 'shortName': 'AAI'},
+            {'name': 'Helpdesk Services', 'shortName': 'Helpdesk'}
+        ]
+
+        response_data = {
+            'stages': MALDRETH_STAGES,
+            'categories': revised_gorc_categories,
+            'correlations': REVISED_CORRELATION_DATA,
+            'stageTools': {}  # Simplified for now
+        }
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        logger.error(f"Error retrieving revised radial visualization data: {str(e)}")
+        return jsonify({'error': 'Failed to retrieve revised radial visualization data'}), 500
+
+@app.route('/comparison')
+def comparison_view():
+    """
+    Render a comparison page showing both original and revised structures.
+
+    Returns:
+        str: Rendered HTML template for comparison view
+    """
+    return render_template('comparison.html')
 
 @app.errorhandler(404)
 def not_found(error):

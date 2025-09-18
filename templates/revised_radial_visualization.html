@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revised MaLDReTH Radial Visualization - Updated Structure (Sept 2025)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .visualization-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 1400px;
+        }
+
+        #revised-radial-viz {
+            width: 100%;
+            height: 900px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .control-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-panel {
+            background: #f0f8ff;
+            border-left: 4px solid #366092;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .comparison-banner {
+            background: linear-gradient(45deg, #ff6b6b, #ffa726);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .stage-circle.active {
+            stroke: #ff6b6b !important;
+            stroke-width: 4 !important;
+        }
+
+        .connection-path {
+            mix-blend-mode: multiply;
+        }
+
+        .category-arc:hover {
+            filter: brightness(1.1);
+        }
+
+        .tool-arc:hover {
+            filter: brightness(1.2);
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stats-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #366092;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 8px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(0,0,0,0.3);">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-diagram-3"></i> Revised MaLDReTH Visualization
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Matrix View</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/radial">Original Radial</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/revised-radial">Revised Radial</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/comparison">Compare Views</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="visualization-container">
+            <!-- Comparison Banner -->
+            <div class="comparison-banner">
+                <h4><i class="bi bi-exclamation-triangle"></i> Revised Structure (September 2025)</h4>
+                <p class="mb-0">
+                    This visualization implements the updated GORC structure from the working group discussion -
+                    decomposed Research Object Repositories and new service categories.
+                </p>
+            </div>
+
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h1 class="display-5">
+                    <i class="bi bi-circle-square"></i>
+                    Revised MaLDReTH-GORC Mapping
+                </h1>
+                <p class="lead text-muted">
+                    Updated visualization with decomposed repository categories and enhanced service classification
+                </p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-number">11</div>
+                        <div class="text-muted">Lifecycle Stages</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-number">14</div>
+                        <div class="text-muted">Revised GORC Categories</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-number">4</div>
+                        <div class="text-muted">Repository Types</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-number">3</div>
+                        <div class="text-muted">New Service Types</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="info-panel">
+                <h5><i class="bi bi-info-circle"></i> What's New in the Revised Structure</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li><strong>Decomposed Repositories:</strong> Split into Data, Publication, Documentation, and Software</li>
+                            <li><strong>New Services:</strong> Data Deposit, Quality Assurance, API Connections</li>
+                            <li><strong>Enhanced Granularity:</strong> More specific service-to-stage mappings</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li><strong>Better Alignment:</strong> GORC arcs now properly align with covered stages</li>
+                            <li><strong>Working Group Input:</strong> Based on September 2025 discussions</li>
+                            <li><strong>Comparison Ready:</strong> Easy to compare with original structure</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="btn-group" role="group">
+                            <button id="reset-viz" class="btn btn-primary">
+                                <i class="bi bi-arrow-clockwise"></i> Reset View
+                            </button>
+                            <button id="show-all-connections" class="btn btn-success">
+                                <i class="bi bi-diagram-2"></i> Show All
+                            </button>
+                            <button id="hide-connections" class="btn btn-secondary">
+                                <i class="bi bi-eye-slash"></i> Hide Lines
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="legend-items">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i>
+                                Revised GORC categories with enhanced granularity - decomposed repositories and new service types.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Filter Panel -->
+            <div class="control-panel mt-3">
+                <h6>Filter by Revised GORC Category:</h6>
+                <div id="category-filters" class="d-flex flex-wrap"></div>
+            </div>
+
+            <!-- Visualization Container -->
+            <div id="revised-radial-viz"></div>
+
+            <!-- Comparison Section -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-arrow-left-right text-primary"></i> Key Changes
+                            </h5>
+                            <ul class="card-text">
+                                <li>Research Object Repositories → 4 specific types</li>
+                                <li>Added Data Deposit Services</li>
+                                <li>Added Quality Assurance Services</li>
+                                <li>Added API Connection Services</li>
+                                <li>Removed "Direct Research Tasks" (integrated into MaLDReTH)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-pie-chart text-success"></i> Enhanced Granularity
+                            </h5>
+                            <p class="card-text">
+                                The decomposed structure provides more specific insights into how
+                                different types of repositories and services support each lifecycle stage.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-people text-warning"></i> Working Group Driven
+                            </h5>
+                            <p class="card-text">
+                                These changes reflect the September 2025 working group discussions
+                                on improving the GORC-MaLDReTH alignment.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Options -->
+            <div class="text-center mt-4">
+                <div class="btn-group" role="group">
+                    <button id="export-svg" class="btn btn-outline-primary">
+                        <i class="bi bi-download"></i> Export as SVG
+                    </button>
+                    <button id="export-png" class="btn btn-outline-primary">
+                        <i class="bi bi-image"></i> Export as PNG
+                    </button>
+                    <a href="/comparison" class="btn btn-outline-warning">
+                        <i class="bi bi-arrow-left-right"></i> Compare Structures
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center text-white mt-5 pb-3">
+        <p class="mb-0">© 2024 Research Data Lifecycle Team | CC-BY 4.0 | Revised Structure Sept 2025</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/radial-visualization.js') }}"></script>
+    <script>
+        // Initialize the revised radial visualization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait a bit for the MaLDReTHRadialVisualization class to be loaded
+            setTimeout(() => {
+                if (typeof MaLDReTHRadialVisualization === 'undefined') {
+                    console.error('MaLDReTHRadialVisualization class not loaded');
+                    document.getElementById('revised-radial-viz').innerHTML =
+                        '<div class="alert alert-danger">MaLDReTHRadialVisualization script failed to load. Please refresh the page.</div>';
+                    return;
+                }
+
+                // Fetch revised data and initialize visualization
+                fetch('/api/revised-radial-visualization-data')
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Revised radial data loaded:', data);
+
+                        // Map the revised data structure to match what MaLDReTHRadialVisualization expects
+                        const mappedData = {
+                            stages: data.stages,
+                            gorcCategories: data.categories, // Use the categories array directly
+                            correlations: data.correlations,
+                            stageTools: data.stageTools || {}
+                        };
+
+                        console.log('Mapped data for MaLDReTHRadialVisualization:', mappedData);
+
+                        // Initialize the visualization with mapped revised data
+                        const viz = new MaLDReTHRadialVisualization('#revised-radial-viz', mappedData);
+
+                        // Update category filters for revised structure
+                        const filterContainer = document.getElementById('category-filters');
+                        filterContainer.innerHTML = ''; // Clear existing filters
+
+                        // Add filter buttons for each category
+                        data.categories.forEach(category => {
+                            const button = document.createElement('button');
+                            button.className = 'btn btn-outline-secondary btn-sm me-2 mb-2';
+                            button.textContent = category.shortName;
+                            button.setAttribute('data-category', category.name);
+                            button.setAttribute('title', category.name);
+                            filterContainer.appendChild(button);
+                        });
+
+                        // Add show all button
+                        const showAllBtn = document.createElement('button');
+                        showAllBtn.className = 'btn btn-outline-secondary btn-sm me-2 mb-2';
+                        showAllBtn.textContent = 'Show All';
+                        showAllBtn.setAttribute('title', 'Reset all filters');
+                        filterContainer.appendChild(showAllBtn);
+
+                        // Add filter event delegation
+                        filterContainer.addEventListener('click', function(event) {
+                            if (event.target.tagName === 'BUTTON') {
+                                event.preventDefault();
+                                event.stopPropagation();
+
+                                const categoryName = event.target.getAttribute('data-category');
+
+                                if (categoryName) {
+                                    // Reset all category buttons
+                                    filterContainer.querySelectorAll('button[data-category]').forEach(b => {
+                                        b.className = 'btn btn-outline-secondary btn-sm me-2 mb-2';
+                                    });
+
+                                    // Set this button to active
+                                    event.target.className = 'btn btn-secondary btn-sm me-2 mb-2';
+
+                                    // Call highlight method
+                                    viz.highlightCategory(categoryName);
+
+                                } else if (event.target.textContent.trim() === 'Show All') {
+                                    // Reset all buttons
+                                    filterContainer.querySelectorAll('button').forEach(b => {
+                                        if (b.getAttribute('data-category')) {
+                                            b.className = 'btn btn-outline-secondary btn-sm me-2 mb-2';
+                                        } else {
+                                            b.className = 'btn btn-secondary btn-sm me-2 mb-2';
+                                        }
+                                    });
+
+                                    // Call reset method
+                                    viz.resetView();
+                                }
+                            }
+                        }, true); // Use capture phase
+                    })
+                    .catch(error => {
+                        console.error('Error loading revised radial data:', error);
+                        document.getElementById('revised-radial-viz').innerHTML =
+                            '<div class="alert alert-danger">Failed to load revised visualization data: ' + error.message + '</div>';
+                    });
+            }, 500); // Longer delay to ensure script is loaded
+        });
+
+        // Export functionality
+        document.getElementById('export-svg').addEventListener('click', function() {
+            const svgElement = document.querySelector('#revised-radial-viz svg');
+            if (svgElement) {
+                const svgData = new XMLSerializer().serializeToString(svgElement);
+                const blob = new Blob([svgData], {type: 'image/svg+xml'});
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'revised-maldreth-radial-visualization.svg';
+                link.click();
+            }
+        });
+
+        document.getElementById('export-png').addEventListener('click', function() {
+            const svgElement = document.querySelector('#revised-radial-viz svg');
+            if (svgElement) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const data = new XMLSerializer().serializeToString(svgElement);
+                const img = new Image();
+                const svgBlob = new Blob([data], {type: 'image/svg+xml;charset=utf-8'});
+                const url = URL.createObjectURL(svgBlob);
+
+                img.onload = function() {
+                    canvas.width = 1200;
+                    canvas.height = 1200;
+                    ctx.drawImage(img, 0, 0);
+                    URL.revokeObjectURL(url);
+
+                    canvas.toBlob(function(blob) {
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = 'revised-maldreth-radial-visualization.png';
+                        link.click();
+                    });
+                };
+                img.src = url;
+            }
+        });
+    </script>
+</body>
+</html>
