@@ -12,12 +12,13 @@ An interactive web application for visualizing and analyzing correlations betwee
 
 ### 🎯 Radial Visualization
 - **Multi-Layer Design**: MaLDReTH stages (center) → GORC categories (middle rings) → Tools (outer ring)
-- **Dynamic Arc Coverage**: Category arcs span across all correlated lifecycle stages
-- **Interactive Filtering**: Click stages or use category filter buttons - all 9 GORC filters fully functional
-- **Optimized Spacing**: GORC categories with unique positioning to prevent visual overlap
-- **Color-Coded Categories**: 9 distinct green variations for clear visual distinction
+- **Smart Arc Coverage**: Category arcs precisely align with correlated lifecycle stages and break for non-adjacent coverage
+- **Interactive Filtering**: Click stages or use category filter buttons - all GORC filters fully functional with fixed z-index layering
+- **Optimized Dimensions**: Responsive SVG sizing (1000x800) fits properly within containers without overlap
+- **Color-Coded Categories**: Distinct green variations with separate arcs for broken coverage spans
 - **Enhanced Controls**: Reset View, Show All, and Hide Lines buttons with full functionality
-- **Export Support**: SVG and PNG export options
+- **Perfect Alignment**: Arc segments now properly align with their corresponding MaLDReTH stages
+- **Export Support**: SVG and PNG export options with updated dimensions
 
 ### 📈 Key Insights
 - **Universal Services**: AAI and Helpdesk support all 11 lifecycle stages
@@ -79,6 +80,25 @@ mal-gorc-corr/
 ├── updates.txt                     # Detailed change log
 └── README.md                       # This file
 ```
+
+## 🆕 Recent Improvements (v1.6.0)
+
+### Arc Alignment & Visualization Fixes
+- **Fixed Arc Positioning**: Category arcs now precisely align with their corresponding MaLDReTH stages using correct angular calculations
+- **Broken Arc Support**: Non-adjacent stage coverage now properly displays as separate arc segments
+- **SVG Overlap Resolution**: Fixed z-index layering issues where SVG canvas was blocking filter button interactions
+- **Optimized Dimensions**: Reduced SVG size from 1200x1400 to 1000x800 for better container fit
+- **Enhanced Spacing**: Improved arc padding and positioning for better visual clarity
+
+### Interactive Filter Fixes
+- **Clickable Buttons**: All GORC category filter buttons now work correctly with proper z-index stacking
+- **Container Overflow**: Added overflow controls to prevent visualization elements from extending beyond boundaries
+- **Responsive Design**: Better scaling and positioning for different screen sizes
+
+### Technical Improvements
+- **Arc Calculation**: Refactored angular positioning to match stage placement exactly
+- **Circular Handling**: Improved logic for wrap-around cases in circular visualizations
+- **Performance**: Optimized rendering with reduced complexity and better resource management
 
 ## 🔗 API Endpoints
 

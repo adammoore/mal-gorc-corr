@@ -9,13 +9,13 @@ class MaLDReTHRadialVisualization {
     constructor(containerId, data) {
         this.containerId = containerId;
         this.data = data;
-        this.width = 1200;
-        this.height = 1400;
+        this.width = 1000;
+        this.height = 800;
         this.centerRadius = 80;
         this.stageRadius = 180;
-        this.categoryBaseRadius = 320; // Moved further out to avoid stage overlap
-        this.categoryRingSpacing = 50;
-        this.toolRadius = 520; // Moved out to accommodate GORC arcs
+        this.categoryBaseRadius = 260; // Reduced to fit smaller SVG
+        this.categoryRingSpacing = 40;
+        this.toolRadius = 400; // Reduced to fit smaller SVG
         this.categoryRings = 3; // Number of concentric rings for categories
         this.colors = {
             stages: d3.scaleOrdinal()
@@ -119,29 +119,78 @@ class MaLDReTHRadialVisualization {
             if (coverage.stages.length > 0) {
                 const angleStep = (2 * Math.PI) / this.data.stages.length;
 
+                // Sort stages by index to ensure proper grouping
+                coverage.stages.sort((a, b) => a.index - b.index);
+
                 // Group consecutive stages into runs for broken arc segments
                 let spanIndices = [];
                 let currentRun = [coverage.stages[0].index];
 
                 for (let i = 1; i < coverage.stages.length; i++) {
-                    // Adjacent stages (difference of 1) are continuous
-                    if (coverage.stages[i].index - coverage.stages[i-1].index <= 1) {
-                        currentRun.push(coverage.stages[i].index);
+                    const currentIndex = coverage.stages[i].index;
+                    const previousIndex = coverage.stages[i-1].index;
+
+                    // Check for adjacency, including circular adjacency (last stage to first)
+                    const isAdjacent = (currentIndex - previousIndex === 1) ||
+                                     (previousIndex === this.data.stages.length - 1 && currentIndex === 0);
+
+                    if (isAdjacent) {
+                        currentRun.push(currentIndex);
                     } else {
+                        // Non-adjacent, so end current run and start new one
                         spanIndices.push(currentRun);
-                        currentRun = [coverage.stages[i].index];
+                        currentRun = [currentIndex];
                     }
                 }
                 spanIndices.push(currentRun);
+
+                // Handle circular cases where first and last runs might be adjacent
+                if (spanIndices.length > 1) {
+                    const firstRun = spanIndices[0];
+                    const lastRun = spanIndices[spanIndices.length - 1];
+
+                    // Check if last stage of last run is adjacent to first stage of first run
+                    const lastStageIndex = Math.max(...lastRun);
+                    const firstStageIndex = Math.min(...firstRun);
+
+                    if (lastStageIndex === this.data.stages.length - 1 && firstStageIndex === 0) {
+                        // Merge first and last runs
+                        const mergedRun = [...lastRun, ...firstRun];
+                        spanIndices = [mergedRun, ...spanIndices.slice(1, -1)];
+                    }
+                }
 
                 // Create arc segments for each continuous run (broken arcs)
                 coverage.arcSegments = spanIndices.map(run => {
                     const startStageIndex = Math.min(...run);
                     const endStageIndex = Math.max(...run);
 
+                    // Calculate angles using the same formula as stage positioning
+                    // Include a small arc extension (angleStep/4) to make arcs more visible around stages
+                    const arcPadding = angleStep / 4;
+
+                    let startAngle = (startStageIndex * angleStep) - Math.PI / 2 - arcPadding;
+                    let endAngle = (endStageIndex * angleStep) - Math.PI / 2 + arcPadding;
+
+                    // Handle circular wrap-around cases
+                    if (run.includes(0) && run.includes(this.data.stages.length - 1)) {
+                        // This segment wraps around the circle
+                        const nonWrapIndices = run.filter(idx => idx !== 0 && idx !== this.data.stages.length - 1);
+
+                        if (nonWrapIndices.length > 0) {
+                            // Find the gap and determine which side to use
+                            const gap = Math.max(...nonWrapIndices) - Math.min(...nonWrapIndices);
+                            if (gap < this.data.stages.length / 2) {
+                                // Use the continuous section
+                                startAngle = (Math.min(...nonWrapIndices) * angleStep) - Math.PI / 2 - arcPadding;
+                                endAngle = (Math.max(...nonWrapIndices) * angleStep) - Math.PI / 2 + arcPadding;
+                            }
+                        }
+                    }
+
                     return {
-                        startAngle: (startStageIndex * angleStep) - Math.PI / 2 - angleStep / 2,
-                        endAngle: (endStageIndex * angleStep) - Math.PI / 2 + angleStep / 2,
+                        startAngle: startAngle,
+                        endAngle: endAngle,
                         stages: run.map(idx => coverage.stages.find(s => s.index === idx))
                     };
                 });
@@ -151,8 +200,9 @@ class MaLDReTHRadialVisualization {
                 const startStageIndex = Math.min(...primarySegment);
                 const endStageIndex = Math.max(...primarySegment);
 
-                coverage.startAngle = (startStageIndex * angleStep) - Math.PI / 2 - angleStep / 2;
-                coverage.endAngle = (endStageIndex * angleStep) - Math.PI / 2 + angleStep / 2;
+                const arcPadding = angleStep / 4;
+                coverage.startAngle = (startStageIndex * angleStep) - Math.PI / 2 - arcPadding;
+                coverage.endAngle = (endStageIndex * angleStep) - Math.PI / 2 + arcPadding;
 
                 // Determine overall strength
                 if (coverage.strongCount >= 3) {
