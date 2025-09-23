@@ -57,15 +57,15 @@ class MaLDReTHRadialVisualization {
             .attr('transform', `translate(${this.width/2}, ${this.height/2})`);
         
         // Add zoom behavior
-        const zoom = d3.zoom()
+        this.zoom = d3.zoom()
             .scaleExtent([0.5, 3])
             .on('zoom', (event) => {
-                this.g.attr('transform', 
+                this.g.attr('transform',
                     `translate(${this.width/2}, ${this.height/2}) scale(${event.transform.k})`
                 );
             });
-        
-        this.svg.call(zoom);
+
+        this.svg.call(this.zoom);
         
         // Calculate GORC category coverage
         this.calculateCategoryCoverage();
@@ -979,6 +979,13 @@ class MaLDReTHRadialVisualization {
         d3.selectAll('.category-arc').style('opacity', 0.7);
         d3.selectAll('.connection-path').style('stroke-opacity', 0.2).style('display', 'block');
         d3.selectAll('.stage-circle').classed('active', false).style('stroke-width', 2).style('stroke', '#fff');
+
+        // Reset zoom to initial state
+        if (this.zoom && this.svg) {
+            this.svg.transition()
+                .duration(750)
+                .call(this.zoom.transform, d3.zoomIdentity);
+        }
     }
 }
 
@@ -1003,6 +1010,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     .classed('active', false)  // Remove active class
                     .style('stroke-width', 2)
                     .style('stroke', '#fff');   // Reset to white border
+
+                // Reset zoom to initial state
+                if (window.radialViz && window.radialViz.zoom && window.radialViz.svg) {
+                    window.radialViz.svg.transition()
+                        .duration(750)
+                        .call(window.radialViz.zoom.transform, d3.zoomIdentity);
+                }
 
                 // Reset all filter buttons
                 const filterContainer = document.getElementById('category-filters');
