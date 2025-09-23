@@ -394,6 +394,9 @@ class MaLDReTHRadialVisualization {
         const categoryGroup = this.g.append('g')
             .attr('class', 'category-arcs');
 
+        // Calculate angle step for stage positioning
+        const angleStep = (2 * Math.PI) / this.data.stages.length;
+
         // Sort categories by strength for ring assignment
         const categoriesWithCoverage = this.data.gorcCategories
             .map(category => ({
