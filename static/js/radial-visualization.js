@@ -14,7 +14,7 @@ class MaLDReTHRadialVisualization {
         this.centerRadius = 80;
         this.stageRadius = 180;
         this.categoryBaseRadius = 240; // Further reduced to prevent overlap
-        this.categoryRingSpacing = 25; // Tighter spacing
+        this.categoryRingSpacing = 35; // Increased spacing to maintain separation with thinner arcs
         this.toolRadius = 380; // Moved closer but with adequate gap
         this.categoryRings = 3; // Number of concentric rings for categories
         this.colors = {
