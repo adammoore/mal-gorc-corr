@@ -12,13 +12,14 @@ An interactive web application for visualizing and analyzing correlations betwee
 
 ### 🎯 Radial Visualization
 - **Multi-Layer Design**: MaLDReTH stages (center) → GORC categories (middle rings) → Tools (outer ring)
-- **Smart Arc Coverage**: Category arcs precisely align with correlated lifecycle stages and break for non-adjacent coverage
-- **Interactive Filtering**: Click stages or use category filter buttons - all GORC filters fully functional with fixed z-index layering
-- **Optimized Dimensions**: Responsive SVG sizing (1000x800) fits properly within containers without overlap
-- **Color-Coded Categories**: Distinct green variations with separate arcs for broken coverage spans
-- **Enhanced Controls**: Reset View, Show All, and Hide Lines buttons with full functionality
-- **Perfect Alignment**: Arc segments now properly align with their corresponding MaLDReTH stages
-- **Export Support**: SVG and PNG export options with updated dimensions
+- **Precise Arc Alignment**: Category arcs perfectly align with corresponding lifecycle stages using exact angular calculations
+- **Smart Broken Arcs**: Non-adjacent stage coverage displays as separate arc segments with individual stage centering
+- **Accurate Stage Interaction**: Click stages to highlight correct GORC arcs - fixed radius calculation mismatch
+- **Fully Functional Controls**: Reset View, Show All, and Hide Lines buttons with comprehensive state management
+- **Optimized Layout**: No overlap between GORC arcs and tools with refined spacing (240px→380px radius gap)
+- **Interactive Filtering**: All GORC category filter buttons fully functional with proper z-index layering
+- **Cross-Platform**: Both original and revised radial visualizations share the same robust functionality
+- **Export Support**: SVG and PNG export options with optimized 1000x800 dimensions
 
 ### 📈 Key Insights
 - **Universal Services**: AAI and Helpdesk support all 11 lifecycle stages
@@ -81,24 +82,30 @@ mal-gorc-corr/
 └── README.md                       # This file
 ```
 
-## 🆕 Recent Improvements (v1.6.0)
+## 🆕 Recent Improvements (v1.7.0)
 
-### Arc Alignment & Visualization Fixes
-- **Fixed Arc Positioning**: Category arcs now precisely align with their corresponding MaLDReTH stages using correct angular calculations
-- **Broken Arc Support**: Non-adjacent stage coverage now properly displays as separate arc segments
-- **SVG Overlap Resolution**: Fixed z-index layering issues where SVG canvas was blocking filter button interactions
-- **Optimized Dimensions**: Reduced SVG size from 1200x1400 to 1000x800 for better container fit
-- **Enhanced Spacing**: Improved arc padding and positioning for better visual clarity
+### Critical Arc Alignment & Stage Interaction Fixes
+- **Perfect Arc Alignment**: Category arcs now precisely align with their corresponding MaLDReTH stages using exact angular calculations (padding reduced from angleStep/4 to angleStep/6)
+- **Stage Filtering Logic**: Fixed critical issue where clicking stages highlighted wrong arcs due to radius calculation mismatch between arcs and connections
+- **Broken Arc Support**: Non-adjacent stage coverage properly displays as separate arc segments with precise positioning
+- **Single Stage Arcs**: Individual stages now have perfectly centered small arcs for precise visual feedback
 
-### Interactive Filter Fixes
-- **Clickable Buttons**: All GORC category filter buttons now work correctly with proper z-index stacking
-- **Container Overflow**: Added overflow controls to prevent visualization elements from extending beyond boundaries
-- **Responsive Design**: Better scaling and positioning for different screen sizes
+### Button Functionality Overhaul
+- **Reset View**: Now properly clears all active stage states, resets stroke colors to white, and removes active classes
+- **Show All**: Correctly resets stage selections and displays all connections with standard opacity
+- **Stage Highlighting**: Clicking stages now highlights the correct corresponding GORC arcs and connections
 
-### Technical Improvements
-- **Arc Calculation**: Refactored angular positioning to match stage placement exactly
-- **Circular Handling**: Improved logic for wrap-around cases in circular visualizations
-- **Performance**: Optimized rendering with reduced complexity and better resource management
+### Layout & Spacing Optimization
+- **Resolved Overlap**: Fixed GORC arc overlap with MaLDReTH tools by adjusting radii (category base: 240px, tool: 380px)
+- **Tighter Spacing**: Reduced category ring spacing to 25px and arc thickness to 8px total (±4px from center)
+- **SVG Dimensions**: Optimized SVG size (1000x800) with proper container overflow controls
+- **Z-Index Fixes**: Control panels now have higher z-index (10) ensuring all filter buttons are clickable
+
+### Technical Architecture Improvements
+- **Connection Accuracy**: Unified radius calculations between arc creation and connection generation
+- **Angular Precision**: Enhanced arc calculations for single-stage and multi-stage segments
+- **State Management**: Comprehensive reset functionality for all visual states and button classes
+- **Cross-Visualization**: All fixes apply to both original and revised radial visualizations
 
 ## 🔗 API Endpoints
 

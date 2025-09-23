@@ -13,9 +13,9 @@ class MaLDReTHRadialVisualization {
         this.height = 800;
         this.centerRadius = 80;
         this.stageRadius = 180;
-        this.categoryBaseRadius = 260; // Reduced to fit smaller SVG
-        this.categoryRingSpacing = 40;
-        this.toolRadius = 400; // Reduced to fit smaller SVG
+        this.categoryBaseRadius = 240; // Further reduced to prevent overlap
+        this.categoryRingSpacing = 25; // Tighter spacing
+        this.toolRadius = 380; // Moved closer but with adequate gap
         this.categoryRings = 3; // Number of concentric rings for categories
         this.colors = {
             stages: d3.scaleOrdinal()
@@ -165,12 +165,19 @@ class MaLDReTHRadialVisualization {
                     const startStageIndex = Math.min(...run);
                     const endStageIndex = Math.max(...run);
 
-                    // Calculate angles using the same formula as stage positioning
-                    // Include a small arc extension (angleStep/4) to make arcs more visible around stages
-                    const arcPadding = angleStep / 4;
+                    // Calculate angles to center perfectly on the stages
+                    // Use smaller padding to be more precise
+                    const arcPadding = angleStep / 6;
 
                     let startAngle = (startStageIndex * angleStep) - Math.PI / 2 - arcPadding;
                     let endAngle = (endStageIndex * angleStep) - Math.PI / 2 + arcPadding;
+
+                    // For single stages, create a small arc centered on the stage
+                    if (startStageIndex === endStageIndex) {
+                        const stageAngle = (startStageIndex * angleStep) - Math.PI / 2;
+                        startAngle = stageAngle - arcPadding;
+                        endAngle = stageAngle + arcPadding;
+                    }
 
                     // Handle circular wrap-around cases
                     if (run.includes(0) && run.includes(this.data.stages.length - 1)) {
@@ -200,7 +207,7 @@ class MaLDReTHRadialVisualization {
                 const startStageIndex = Math.min(...primarySegment);
                 const endStageIndex = Math.max(...primarySegment);
 
-                const arcPadding = angleStep / 4;
+                const arcPadding = angleStep / 6;
                 coverage.startAngle = (startStageIndex * angleStep) - Math.PI / 2 - arcPadding;
                 coverage.endAngle = (endStageIndex * angleStep) - Math.PI / 2 + arcPadding;
 
@@ -401,12 +408,12 @@ class MaLDReTHRadialVisualization {
         categoriesWithCoverage.forEach((category, index) => {
             const coverage = category.coverage;
 
-            // Assign each category to its own unique ring with tighter spacing
-            const categoryRadius = this.categoryBaseRadius + (index * 20); // Even tighter spacing
+            // Assign each category to its own unique ring with controlled spacing
+            const categoryRadius = this.categoryBaseRadius + (index * this.categoryRingSpacing);
 
-            // Create thinner arcs with better spacing
-            const innerRadius = categoryRadius - 6; // Thinner
-            const outerRadius = categoryRadius + 6; // Thinner
+            // Create thinner arcs to prevent overlap
+            const innerRadius = categoryRadius - 4; // Even thinner
+            const outerRadius = categoryRadius + 4; // Even thinner
 
             // Create arc group for this category
             const arcGroup = categoryGroup.append('g')
@@ -600,8 +607,8 @@ class MaLDReTHRadialVisualization {
         // Create connections from stages to their correlated GORC categories
         sortedCategories.forEach((category, index) => {
             const coverage = category.coverage;
-            const ringIndex = index % this.categoryRings;
-            const categoryRadius = this.categoryBaseRadius + (ringIndex * this.categoryRingSpacing);
+            // Use the same radius calculation as arcs to ensure alignment
+            const categoryRadius = this.categoryBaseRadius + (index * this.categoryRingSpacing);
 
             coverage.stages.forEach(stageInfo => {
                 const stagePos = this.stagePositions[stageInfo.stage];
@@ -988,12 +995,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Reset View clicked');
                 // Reset all visual states to default
                 d3.selectAll('.category-arc-group').style('opacity', 0.8);
+                d3.selectAll('.category-arc').style('opacity', 0.8);
                 d3.selectAll('.connection-path')
                     .style('display', 'block')
                     .style('stroke-opacity', 0.15);
                 d3.selectAll('.stage-circle')
+                    .classed('active', false)  // Remove active class
                     .style('stroke-width', 2)
-                    .style('stroke', '#ccc');
+                    .style('stroke', '#fff');   // Reset to white border
 
                 // Reset all filter buttons
                 const filterContainer = document.getElementById('category-filters');
@@ -1010,10 +1019,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
             document.getElementById('show-all-connections').addEventListener('click', () => {
                 console.log('Show All clicked');
+                // Reset stage selections
+                d3.selectAll('.stage-circle').classed('active', false);
+
+                // Show all connections and arcs
                 d3.selectAll('.connection-path')
                     .style('display', 'block')
-                    .style('stroke-opacity', 0.3); // More visible
+                    .style('stroke-opacity', 0.2); // Standard visibility
                 d3.selectAll('.category-arc-group')
+                    .style('opacity', 0.8);
+                d3.selectAll('.category-arc')
                     .style('opacity', 0.8);
             });
 
