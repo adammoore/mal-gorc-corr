@@ -13,9 +13,9 @@ class MaLDReTHRadialVisualization {
         this.height = 800;
         this.centerRadius = 80;
         this.stageRadius = 180;
-        this.categoryBaseRadius = 240; // Further reduced to prevent overlap
-        this.categoryRingSpacing = 35; // Increased spacing to maintain separation with thinner arcs
-        this.toolRadius = 380; // Moved closer but with adequate gap
+        this.categoryBaseRadius = 230; // Start closer to stages
+        this.categoryRingSpacing = 15; // Reduced spacing to fit all arcs inside tools
+        this.toolRadius = 380; // Keep tools at same radius
         this.categoryRings = 3; // Number of concentric rings for categories
         this.colors = {
             stages: d3.scaleOrdinal()
@@ -166,8 +166,8 @@ class MaLDReTHRadialVisualization {
                     const endStageIndex = Math.max(...run);
 
                     // Calculate angles to center perfectly on the stages
-                    // Use smaller padding to be more precise
-                    const arcPadding = angleStep / 6;
+                    // Use minimal padding for precise alignment
+                    const arcPadding = angleStep / 8;
 
                     let startAngle = (startStageIndex * angleStep) - Math.PI / 2 - arcPadding;
                     let endAngle = (endStageIndex * angleStep) - Math.PI / 2 + arcPadding;
@@ -207,7 +207,7 @@ class MaLDReTHRadialVisualization {
                 const startStageIndex = Math.min(...primarySegment);
                 const endStageIndex = Math.max(...primarySegment);
 
-                const arcPadding = angleStep / 6;
+                const arcPadding = angleStep / 8;
                 coverage.startAngle = (startStageIndex * angleStep) - Math.PI / 2 - arcPadding;
                 coverage.endAngle = (endStageIndex * angleStep) - Math.PI / 2 + arcPadding;
 
@@ -411,9 +411,9 @@ class MaLDReTHRadialVisualization {
             // Assign each category to its own unique ring with controlled spacing
             const categoryRadius = this.categoryBaseRadius + (index * this.categoryRingSpacing);
 
-            // Create thinner arcs to prevent overlap
-            const innerRadius = categoryRadius - 4; // Even thinner
-            const outerRadius = categoryRadius + 4; // Even thinner
+            // Create properly sized arcs with reduced spacing
+            const innerRadius = categoryRadius - 6; // Slightly thicker for visibility
+            const outerRadius = categoryRadius + 6; // Slightly thicker for visibility
 
             // Create arc group for this category
             const arcGroup = categoryGroup.append('g')
@@ -554,10 +554,11 @@ class MaLDReTHRadialVisualization {
             const tools = this.data.stageTools[stage] || [];
             
             if (tools.length > 0) {
-                // Create a small arc for each tool
+                // Create tool arcs centered on the stage angle
                 const toolArcWidth = (angleStep * 0.8) / tools.length;
-                const toolStartAngle = stageAngle - (angleStep * 0.4);
-                
+                const totalToolsWidth = toolArcWidth * tools.length;
+                const toolStartAngle = stageAngle - (totalToolsWidth / 2);
+
                 tools.forEach((tool, toolIndex) => {
                     const startAngle = toolStartAngle + (toolIndex * toolArcWidth);
                     const endAngle = startAngle + toolArcWidth * 0.9;
