@@ -424,67 +424,72 @@ class MaLDReTHRadialVisualization {
                 .attr('class', 'category-arc-group')
                 .attr('data-category', category.name);
 
-            // Create individual arcs for each correlated stage
-            coverage.stages.forEach((stageInfo, stageIdx) => {
-                const stageAngle = (stageInfo.index * angleStep) - Math.PI / 2;
-                const arcPadding = angleStep / 10; // Small padding around each stage
-                const startAngle = stageAngle - arcPadding;
-                const endAngle = stageAngle + arcPadding;
+            // Create a single arc spanning from min to max correlated stage
+            const minStageIndex = Math.min(...coverage.stages.map(s => s.index));
+            const maxStageIndex = Math.max(...coverage.stages.map(s => s.index));
 
-                const arcGenerator = d3.arc()
-                    .innerRadius(innerRadius)
-                    .outerRadius(outerRadius)
-                    .startAngle(startAngle)
-                    .endAngle(endAngle)
-                    .cornerRadius(2);
+            // Calculate arc angles with proper alignment
+            const arcPadding = angleStep / 8;
+            let startAngle = (minStageIndex * angleStep) - Math.PI / 2 - arcPadding;
+            let endAngle = (maxStageIndex * angleStep) - Math.PI / 2 + arcPadding;
 
-                // Create individual arc for this stage
-                const arc = arcGroup.append('path')
-                    .attr('d', arcGenerator())
-                    .attr('fill', this.colors.gorcCategories(index))
+            // Handle circular cases (when arc would span more than half the circle)
+            const arcSpan = maxStageIndex - minStageIndex;
+            if (arcSpan > this.data.stages.length / 2) {
+                // This is likely a wrap-around case, swap start and end
+                startAngle = (maxStageIndex * angleStep) - Math.PI / 2 + arcPadding;
+                endAngle = (minStageIndex * angleStep) - Math.PI / 2 - arcPadding + (2 * Math.PI);
+            }
+
+            const arcGenerator = d3.arc()
+                .innerRadius(innerRadius)
+                .outerRadius(outerRadius)
+                .startAngle(startAngle)
+                .endAngle(endAngle)
+                .cornerRadius(2);
+
+            // Create the main arc
+            const arc = arcGroup.append('path')
+                .attr('d', arcGenerator())
+                .attr('fill', this.colors.gorcCategories(index))
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 1)
+                .attr('class', 'category-arc')
+                .attr('data-category', category.name)
+                .style('cursor', 'pointer')
+                .style('opacity', 0.8);
+
+            // Add pattern for strong correlations
+            if (coverage.strongCount >= 2) {
+                const patternId = `pattern-${category.name.replace(/\s/g, '-')}`;
+                const pattern = this.defs.append('pattern')
+                    .attr('id', patternId)
+                    .attr('patternUnits', 'userSpaceOnUse')
+                    .attr('width', 4)
+                    .attr('height', 4);
+
+                pattern.append('rect')
+                    .attr('width', 4)
+                    .attr('height', 4)
+                    .attr('fill', this.colors.gorcCategories(index));
+
+                pattern.append('path')
+                    .attr('d', 'M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2')
                     .attr('stroke', '#fff')
-                    .attr('stroke-width', 1)
-                    .attr('class', 'category-arc')
-                    .attr('data-category', category.name)
-                    .attr('data-stage', stageInfo.stage)
-                    .style('cursor', 'pointer')
-                    .style('opacity', 0.8);
+                    .attr('stroke-width', 0.5)
+                    .attr('opacity', 0.5);
 
-                // Add pattern for strong correlations
-                if (stageInfo.marker === 'XX') {
-                    const patternId = `pattern-${category.name.replace(/\s/g, '-')}-${stageIdx}`;
-                    const pattern = this.defs.append('pattern')
-                        .attr('id', patternId)
-                        .attr('patternUnits', 'userSpaceOnUse')
-                        .attr('width', 4)
-                        .attr('height', 4);
+                arc.style('fill', `url(#${patternId})`);
+            }
 
-                    pattern.append('rect')
-                        .attr('width', 4)
-                        .attr('height', 4)
-                        .attr('fill', this.colors.gorcCategories(index));
-
-                    pattern.append('path')
-                        .attr('d', 'M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2')
-                        .attr('stroke', '#fff')
-                        .attr('stroke-width', 0.5)
-                        .attr('opacity', 0.5);
-
-                    arc.style('fill', `url(#${patternId})`);
-                }
-            });
-
-            // Position label at the centroid of all correlated stages
-            const avgAngle = coverage.stages.reduce((sum, stageInfo) => {
-                return sum + ((stageInfo.index * angleStep) - Math.PI / 2);
-            }, 0) / coverage.stages.length;
-
+            // Position label at the center of the arc
+            const labelAngle = (startAngle + endAngle) / 2;
             const labelRadius = outerRadius + 18;
-            const labelX = Math.cos(avgAngle) * labelRadius;
-            const labelY = Math.sin(avgAngle) * labelRadius;
+            const labelX = Math.cos(labelAngle) * labelRadius;
+            const labelY = Math.sin(labelAngle) * labelRadius;
 
             // Calculate text rotation
-            let textRotation = (avgAngle * 180 / Math.PI) + 90;
+            let textRotation = (labelAngle * 180 / Math.PI) + 90;
             if (textRotation > 90 && textRotation < 270) {
                 textRotation += 180;
             }
