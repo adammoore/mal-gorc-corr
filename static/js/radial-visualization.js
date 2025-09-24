@@ -424,22 +424,9 @@ class MaLDReTHRadialVisualization {
                 .attr('class', 'category-arc-group')
                 .attr('data-category', category.name);
 
-            // Create a single arc spanning from min to max correlated stage
-            const minStageIndex = Math.min(...coverage.stages.map(s => s.index));
-            const maxStageIndex = Math.max(...coverage.stages.map(s => s.index));
-
-            // Calculate arc angles with proper alignment
-            const arcPadding = angleStep / 8;
-            let startAngle = (minStageIndex * angleStep) - Math.PI / 2 - arcPadding;
-            let endAngle = (maxStageIndex * angleStep) - Math.PI / 2 + arcPadding;
-
-            // Handle circular cases (when arc would span more than half the circle)
-            const arcSpan = maxStageIndex - minStageIndex;
-            if (arcSpan > this.data.stages.length / 2) {
-                // This is likely a wrap-around case, swap start and end
-                startAngle = (maxStageIndex * angleStep) - Math.PI / 2 + arcPadding;
-                endAngle = (minStageIndex * angleStep) - Math.PI / 2 - arcPadding + (2 * Math.PI);
-            }
+            // Use the pre-calculated angles from coverage calculation
+            const startAngle = coverage.startAngle;
+            const endAngle = coverage.endAngle;
 
             const arcGenerator = d3.arc()
                 .innerRadius(innerRadius)
@@ -526,7 +513,8 @@ class MaLDReTHRadialVisualization {
         const angleStep = (2 * Math.PI) / this.data.stages.length;
         
         this.data.stages.forEach((stage, stageIndex) => {
-            const stageAngle = stageIndex * angleStep - Math.PI / 2;
+            const stagePosition = this.stagePositions[stage];
+            const stageAngle = stagePosition ? stagePosition.angle : (stageIndex * angleStep - Math.PI / 2);
             const tools = this.data.stageTools[stage] || [];
             
             if (tools.length > 0) {
