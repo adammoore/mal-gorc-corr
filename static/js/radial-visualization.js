@@ -514,10 +514,18 @@ class MaLDReTHRadialVisualization {
         // Create tool segments aligned with their stages
         const angleStep = (2 * Math.PI) / this.data.stages.length;
 
+        console.log('=== Tool Arc Creation Debug ===');
+        console.log('Stages array:', this.data.stages);
+        console.log('Stage tools:', this.data.stageTools);
+
         this.data.stages.forEach((stage, stageIndex) => {
             const tools = this.data.stageTools[stage] || [];
 
             if (tools.length > 0) {
+                console.log(`Stage ${stageIndex} (${stage}): ${tools.length} tools at angle range`,
+                    ((stageIndex - 0.5) * angleStep - Math.PI / 2) * 180 / Math.PI,
+                    'to',
+                    ((stageIndex + 0.5) * angleStep - Math.PI / 2) * 180 / Math.PI);
                 // Calculate the stage's full sector boundaries
                 // Each stage sector spans from (index - 0.5)*angleStep to (index + 0.5)*angleStep
                 const sectorStartAngle = ((stageIndex - 0.5) * angleStep) - Math.PI / 2;
