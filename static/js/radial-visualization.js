@@ -166,19 +166,20 @@ class MaLDReTHRadialVisualization {
                     const startStageIndex = Math.min(...run);
                     const endStageIndex = Math.max(...run);
 
-                    // Calculate angles to align with stage centers
-                    // Each stage occupies angleStep radians, centered at (index * angleStep - PI/2)
-                    // Arcs should span from the start of first stage to end of last stage
-                    const arcPadding = angleStep * 0.45; // Span 90% of each stage's sector
+                    // Calculate angles to span the entire sector range
+                    // Each stage is centered at (index * angleStep - PI/2)
+                    // The sector for stage i spans from (i - 0.5)*angleStep to (i + 0.5)*angleStep
+                    // Arc should span from start of first stage's sector to end of last stage's sector
 
-                    let startAngle = (startStageIndex * angleStep) - Math.PI / 2 - arcPadding;
-                    let endAngle = (endStageIndex * angleStep) - Math.PI / 2 + arcPadding;
+                    // Start at the beginning of the first stage's sector (half step before its center)
+                    let startAngle = ((startStageIndex - 0.5) * angleStep) - Math.PI / 2;
+                    // End at the end of the last stage's sector (half step after its center)
+                    let endAngle = ((endStageIndex + 0.5) * angleStep) - Math.PI / 2;
 
-                    // For single stages, create arc centered on the stage
+                    // For single stages, span the full stage sector
                     if (startStageIndex === endStageIndex) {
-                        const stageAngle = (startStageIndex * angleStep) - Math.PI / 2;
-                        startAngle = stageAngle - arcPadding;
-                        endAngle = stageAngle + arcPadding;
+                        startAngle = ((startStageIndex - 0.5) * angleStep) - Math.PI / 2;
+                        endAngle = ((startStageIndex + 0.5) * angleStep) - Math.PI / 2;
                     }
 
                     // Handle circular wrap-around cases
@@ -191,8 +192,8 @@ class MaLDReTHRadialVisualization {
                             const gap = Math.max(...nonWrapIndices) - Math.min(...nonWrapIndices);
                             if (gap < this.data.stages.length / 2) {
                                 // Use the continuous section
-                                startAngle = (Math.min(...nonWrapIndices) * angleStep) - Math.PI / 2 - arcPadding;
-                                endAngle = (Math.max(...nonWrapIndices) * angleStep) - Math.PI / 2 + arcPadding;
+                                startAngle = ((Math.min(...nonWrapIndices) - 0.5) * angleStep) - Math.PI / 2;
+                                endAngle = ((Math.max(...nonWrapIndices) + 0.5) * angleStep) - Math.PI / 2;
                             }
                         }
                     }
@@ -209,9 +210,9 @@ class MaLDReTHRadialVisualization {
                 const startStageIndex = Math.min(...primarySegment);
                 const endStageIndex = Math.max(...primarySegment);
 
-                const arcPadding = angleStep * 0.45; // Match the arcSegments padding
-                coverage.startAngle = (startStageIndex * angleStep) - Math.PI / 2 - arcPadding;
-                coverage.endAngle = (endStageIndex * angleStep) - Math.PI / 2 + arcPadding;
+                // Span the full sector range from start to end
+                coverage.startAngle = ((startStageIndex - 0.5) * angleStep) - Math.PI / 2;
+                coverage.endAngle = ((endStageIndex + 0.5) * angleStep) - Math.PI / 2;
 
                 // Determine overall strength
                 if (coverage.strongCount >= 3) {
@@ -517,12 +518,10 @@ class MaLDReTHRadialVisualization {
             const tools = this.data.stageTools[stage] || [];
 
             if (tools.length > 0) {
-                // Calculate the stage's sector boundaries
-                // Each stage is centered at (stageIndex * angleStep - PI/2)
-                // The sector spans ±angleStep/2 from the center
-                const stageCenterAngle = (stageIndex * angleStep) - Math.PI / 2;
-                const sectorStartAngle = stageCenterAngle - (angleStep * 0.45); // Match GORC padding
-                const sectorEndAngle = stageCenterAngle + (angleStep * 0.45);
+                // Calculate the stage's full sector boundaries
+                // Each stage sector spans from (index - 0.5)*angleStep to (index + 0.5)*angleStep
+                const sectorStartAngle = ((stageIndex - 0.5) * angleStep) - Math.PI / 2;
+                const sectorEndAngle = ((stageIndex + 0.5) * angleStep) - Math.PI / 2;
                 const sectorWidth = sectorEndAngle - sectorStartAngle;
 
                 // Divide the sector among tools with small gaps
