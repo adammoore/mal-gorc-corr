@@ -82,30 +82,26 @@ mal-gorc-corr/
 └── README.md                       # This file
 ```
 
-## 🆕 Recent Improvements (v1.7.0)
+## 🆕 Recent Improvements (v1.8.0)
 
-### Critical Arc Alignment & Stage Interaction Fixes
-- **Perfect Arc Alignment**: Category arcs now precisely align with their corresponding MaLDReTH stages using exact angular calculations (padding reduced from angleStep/4 to angleStep/6)
-- **Stage Filtering Logic**: Fixed critical issue where clicking stages highlighted wrong arcs due to radius calculation mismatch between arcs and connections
-- **Broken Arc Support**: Non-adjacent stage coverage properly displays as separate arc segments with precise positioning
-- **Single Stage Arcs**: Individual stages now have perfectly centered small arcs for precise visual feedback
+### Unified Angular Alignment System
+- **Complete Alignment Fix**: Resolved fundamental angular positioning errors between GORC arcs and tool segments
+- **Consistent Sector Boundaries**: All visual elements now use unified `angleStep * 0.45` padding (90% sector coverage)
+- **Predictable Layout**: Stages → GORC arcs → Tools all share identical angular calculation: `(stageIndex * angleStep) - Math.PI / 2`
+- **Eliminated Offset Issues**: Removed scattered padding values (angleStep/8, angleStep*0.8) in favor of single unified constant
+- **Tool Segment Allocation**: Tools now properly divide their parent stage's sector with even spacing and 5% gaps
 
-### Button Functionality Overhaul
-- **Reset View**: Now properly clears all active stage states, resets stroke colors to white, and removes active classes
-- **Show All**: Correctly resets stage selections and displays all connections with standard opacity
-- **Stage Highlighting**: Clicking stages now highlights the correct corresponding GORC arcs and connections
+### Angular Calculation Improvements
+- **GORC Category Arcs**: Updated from `angleStep / 8` to `angleStep * 0.45` for consistent 90% sector coverage
+- **Tool Arc Positioning**: Removed dependency on stagePositions lookup; now calculates directly from stage index
+- **Sector-Based Layout**: Tools occupy `stageCenterAngle ± (angleStep * 0.45)` matching GORC arc boundaries
+- **Preserved Features**: All interactivity, broken arc support, filtering, and export functionality maintained
 
-### Layout & Spacing Optimization
-- **Resolved Overlap**: Fixed GORC arc overlap with MaLDReTH tools by adjusting radii (category base: 240px, tool: 380px)
-- **Tighter Spacing**: Reduced category ring spacing to 25px and arc thickness to 8px total (±4px from center)
-- **SVG Dimensions**: Optimized SVG size (1000x800) with proper container overflow controls
-- **Z-Index Fixes**: Control panels now have higher z-index (10) ensuring all filter buttons are clickable
-
-### Technical Architecture Improvements
-- **Connection Accuracy**: Unified radius calculations between arc creation and connection generation
-- **Angular Precision**: Enhanced arc calculations for single-stage and multi-stage segments
-- **State Management**: Comprehensive reset functionality for all visual states and button classes
-- **Cross-Visualization**: All fixes apply to both original and revised radial visualizations
+### Technical Architecture
+- **Simplified Code**: Removed redundant `stagePosition` references in tool arc creation
+- **Unified Constants**: Single padding value (`0.45 * angleStep`) used across all three radial layers
+- **Mathematical Consistency**: All angular calculations now follow identical pattern for perfect radial alignment
+- **Clean Segment Allocation**: Tools divide sectors evenly with predictable, uniform spacing
 
 ## 🔗 API Endpoints
 
@@ -218,7 +214,10 @@ export PORT="5000"
 
 ## 🔄 Version History
 
-- **v1.5.0** (Current) - Comprehensive radial visualization improvements with full interactivity
+- **v1.8.0** (Current) - Unified angular alignment system fixing GORC/tool positioning
+- **v1.7.0** - Critical arc alignment and stage interaction fixes
+- **v1.6.0** - Layout and spacing optimization
+- **v1.5.0** - Comprehensive radial visualization improvements with full interactivity
 - **v1.4.0** - Enhanced radial visualization with multi-ring architecture
 - **v1.3.0** - Dynamic arc coverage implementation
 - **v1.2.0** - Added D3.js radial visualization

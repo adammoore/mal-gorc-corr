@@ -166,14 +166,15 @@ class MaLDReTHRadialVisualization {
                     const startStageIndex = Math.min(...run);
                     const endStageIndex = Math.max(...run);
 
-                    // Calculate angles to center perfectly on the stages
-                    // Use minimal padding for precise alignment
-                    const arcPadding = angleStep / 8;
+                    // Calculate angles to align with stage centers
+                    // Each stage occupies angleStep radians, centered at (index * angleStep - PI/2)
+                    // Arcs should span from the start of first stage to end of last stage
+                    const arcPadding = angleStep * 0.45; // Span 90% of each stage's sector
 
                     let startAngle = (startStageIndex * angleStep) - Math.PI / 2 - arcPadding;
                     let endAngle = (endStageIndex * angleStep) - Math.PI / 2 + arcPadding;
 
-                    // For single stages, create a small arc centered on the stage
+                    // For single stages, create arc centered on the stage
                     if (startStageIndex === endStageIndex) {
                         const stageAngle = (startStageIndex * angleStep) - Math.PI / 2;
                         startAngle = stageAngle - arcPadding;
@@ -208,7 +209,7 @@ class MaLDReTHRadialVisualization {
                 const startStageIndex = Math.min(...primarySegment);
                 const endStageIndex = Math.max(...primarySegment);
 
-                const arcPadding = angleStep / 8;
+                const arcPadding = angleStep * 0.45; // Match the arcSegments padding
                 coverage.startAngle = (startStageIndex * angleStep) - Math.PI / 2 - arcPadding;
                 coverage.endAngle = (endStageIndex * angleStep) - Math.PI / 2 + arcPadding;
 
@@ -508,32 +509,37 @@ class MaLDReTHRadialVisualization {
     createToolArcs() {
         const toolGroup = this.g.append('g')
             .attr('class', 'tool-arcs');
-        
+
         // Create tool segments aligned with their stages
         const angleStep = (2 * Math.PI) / this.data.stages.length;
-        
+
         this.data.stages.forEach((stage, stageIndex) => {
-            const stagePosition = this.stagePositions[stage];
-            const stageAngle = stagePosition ? stagePosition.angle : (stageIndex * angleStep - Math.PI / 2);
             const tools = this.data.stageTools[stage] || [];
-            
+
             if (tools.length > 0) {
-                // Create tool arcs centered on the stage angle
-                const toolArcWidth = (angleStep * 0.8) / tools.length;
-                const totalToolsWidth = toolArcWidth * tools.length;
-                const toolStartAngle = stageAngle - (totalToolsWidth / 2);
+                // Calculate the stage's sector boundaries
+                // Each stage is centered at (stageIndex * angleStep - PI/2)
+                // The sector spans ±angleStep/2 from the center
+                const stageCenterAngle = (stageIndex * angleStep) - Math.PI / 2;
+                const sectorStartAngle = stageCenterAngle - (angleStep * 0.45); // Match GORC padding
+                const sectorEndAngle = stageCenterAngle + (angleStep * 0.45);
+                const sectorWidth = sectorEndAngle - sectorStartAngle;
+
+                // Divide the sector among tools with small gaps
+                const toolArcWidth = sectorWidth / tools.length;
+                const gapWidth = toolArcWidth * 0.05; // 5% gap between tools
 
                 tools.forEach((tool, toolIndex) => {
-                    const startAngle = toolStartAngle + (toolIndex * toolArcWidth);
-                    const endAngle = startAngle + toolArcWidth * 0.9;
-                    
+                    const startAngle = sectorStartAngle + (toolIndex * toolArcWidth) + gapWidth;
+                    const endAngle = sectorStartAngle + ((toolIndex + 1) * toolArcWidth) - gapWidth;
+
                     const arcGenerator = d3.arc()
                         .innerRadius(this.toolRadius - 30)
                         .outerRadius(this.toolRadius)
                         .startAngle(startAngle)
                         .endAngle(endAngle)
                         .cornerRadius(2);
-                    
+
                     const toolArc = toolGroup.append('path')
                         .attr('d', arcGenerator())
                         .attr('fill', this.colors.tools(tool.category))
