@@ -426,31 +426,10 @@ class MaLDReTHRadialVisualization {
                 .attr('class', 'category-arc-group')
                 .attr('data-category', category.name);
 
-            // Use the pre-calculated angles from coverage calculation
-            const startAngle = coverage.startAngle;
-            const endAngle = coverage.endAngle;
-
-            const arcGenerator = d3.arc()
-                .innerRadius(innerRadius)
-                .outerRadius(outerRadius)
-                .startAngle(startAngle)
-                .endAngle(endAngle)
-                .cornerRadius(2);
-
-            // Create the main arc
-            const arc = arcGroup.append('path')
-                .attr('d', arcGenerator())
-                .attr('fill', this.colors.gorcCategories(index))
-                .attr('stroke', '#fff')
-                .attr('stroke-width', 1)
-                .attr('class', 'category-arc')
-                .attr('data-category', category.name)
-                .style('cursor', 'pointer')
-                .style('opacity', 0.8);
-
             // Add pattern for strong correlations
+            let patternId = null;
             if (coverage.strongCount >= 2) {
-                const patternId = `pattern-${category.name.replace(/\s/g, '-')}`;
+                patternId = `pattern-${category.name.replace(/\s/g, '-')}`;
                 const pattern = this.defs.append('pattern')
                     .attr('id', patternId)
                     .attr('patternUnits', 'userSpaceOnUse')
@@ -467,12 +446,38 @@ class MaLDReTHRadialVisualization {
                     .attr('stroke', '#fff')
                     .attr('stroke-width', 0.5)
                     .attr('opacity', 0.5);
-
-                arc.style('fill', `url(#${patternId})`);
             }
 
-            // Position label at the center of the arc
-            const labelAngle = (startAngle + endAngle) / 2;
+            // Render all arc segments (broken arcs support)
+            if (coverage.arcSegments && coverage.arcSegments.length > 0) {
+                coverage.arcSegments.forEach((segment, segmentIndex) => {
+                    const arcGenerator = d3.arc()
+                        .innerRadius(innerRadius)
+                        .outerRadius(outerRadius)
+                        .startAngle(segment.startAngle)
+                        .endAngle(segment.endAngle)
+                        .cornerRadius(2);
+
+                    const arc = arcGroup.append('path')
+                        .attr('d', arcGenerator())
+                        .attr('fill', patternId ? `url(#${patternId})` : this.colors.gorcCategories(index))
+                        .attr('stroke', '#fff')
+                        .attr('stroke-width', 1)
+                        .attr('class', 'category-arc')
+                        .attr('data-category', category.name)
+                        .attr('data-segment', segmentIndex)
+                        .style('cursor', 'pointer')
+                        .style('opacity', 0.8);
+                });
+            }
+
+            // Position label at the center of the primary (longest) arc segment
+            const primarySegment = coverage.arcSegments && coverage.arcSegments.length > 0
+                ? coverage.arcSegments.reduce((a, b) =>
+                    (b.endAngle - b.startAngle) > (a.endAngle - a.startAngle) ? b : a)
+                : { startAngle: coverage.startAngle, endAngle: coverage.endAngle };
+
+            const labelAngle = (primarySegment.startAngle + primarySegment.endAngle) / 2;
             const labelRadius = outerRadius + 18;
             const labelX = Math.cos(labelAngle) * labelRadius;
             const labelY = Math.sin(labelAngle) * labelRadius;
@@ -514,18 +519,10 @@ class MaLDReTHRadialVisualization {
         // Create tool segments aligned with their stages
         const angleStep = (2 * Math.PI) / this.data.stages.length;
 
-        console.log('=== Tool Arc Creation Debug ===');
-        console.log('Stages array:', this.data.stages);
-        console.log('Stage tools:', this.data.stageTools);
-
         this.data.stages.forEach((stage, stageIndex) => {
             const tools = this.data.stageTools[stage] || [];
 
             if (tools.length > 0) {
-                console.log(`Stage ${stageIndex} (${stage}): ${tools.length} tools at angle range`,
-                    ((stageIndex - 0.5) * angleStep - Math.PI / 2) * 180 / Math.PI,
-                    'to',
-                    ((stageIndex + 0.5) * angleStep - Math.PI / 2) * 180 / Math.PI);
                 // Calculate the stage's full sector boundaries
                 // Each stage sector spans from (index - 0.5)*angleStep to (index + 0.5)*angleStep
                 const sectorStartAngle = ((stageIndex - 0.5) * angleStep) - Math.PI / 2;
